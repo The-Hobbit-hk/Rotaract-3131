@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REIGN Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            display: block;
+            height: auto;
+            min-height: 100vh;
+            padding: 40px;
+            overflow-y: auto;
+        }
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+        .header img {
+            height: 60px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+        th, td {
+            text-align: left;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: var(--background);
+            color: var(--accent2);
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        .view-btn {
+            background: var(--accent1);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .view-btn:hover {
+            background: var(--accent2);
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            padding: 40px;
+        }
+        .modal {
+            background: var(--white);
+            width: 100%;
+            max-width: 800px;
+            height: 100%;
+            margin: 0 auto;
+            border-radius: 15px;
+            padding: 30px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .close-btn {
+            position: absolute;
+            top: 20px; right: 20px;
+            background: #ff4d4f;
+            color: white;
+            border: none;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .data-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .data-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .data-value {
+            font-size: 15px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <div class="header">
+            <div>
+                <h1 style="margin:0;">Council Workbooks Monitor</h1>
+                <p style="margin:0; color:#666;">View and manage 60 RIY 2026-27 District 3131 council members.</p>
+            </div>
+            <img src="reign_logo.png" alt="REIGN Logo">
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Email / ID</th>
+                    <th>Name</th>
+                    <th>Club</th>
+                    <th>Activity Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="user-table-body">
+                <tr><td colspan="5" style="text-align:center;">Loading records...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- User Details Modal -->
+    <div class="modal-overlay" id="user-modal">
+        <div class="modal">
+            <button class="close-btn" onclick="closeModal()">X</button>
+            <h2 id="modal-title">Member Details</h2>
+            <div class="data-grid" id="modal-data">
+                <!-- Fetched data injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let usersData = [];
+
+        async function fetchRecords() {
+            try {
+                const response = await fetch('/api/admin/data');
+                const result = await response.json();
+                usersData = result.users || [];
+                renderTable();
+            } catch (e) {
+                console.error("Failed to fetch admin data", e);
+                // Only show error if no data already present
+                if (usersData.length === 0) {
+                    document.getElementById('user-table-body').innerHTML = '<tr><td colspan="5" style="text-align:center;color:red;">Failed to load records. Ensure Node server is running.</td></tr>';
+                }
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('user-table-body');
+            tbody.innerHTML = '';
+            
+            if (usersData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No council members have started their workbooks yet.</td></tr>';
+                return;
+            }
+
+            const now = new Date();
+            const nowUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 
+                                   now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds());
+
+            usersData.forEach((user, index) => {
+                const name = user.data.prof_name || '<span style="color:#aaa;">Not filled</span>';
+                const club = user.data.prof_club || '<span style="color:#aaa;">Not filled</span>';
+                
+                // Active calculation (last 2 minutes)
+                // SQLite CURRENT_TIMESTAMP is UTC 'YYYY-MM-DD HH:MM:SS'
+                // We parse it as UTC by adding 'Z'
+                const lastSeenStr = user.last_seen.replace(' ', 'T') + 'Z';
+                const lastSeen = new Date(lastSeenStr);
+                const diffMs = nowUtc - lastSeen.getTime();
+                const isActive = diffMs < 120000; // 2 minutes in ms
+                
+                const statusTag = isActive 
+                    ? '<span style="background:#d4edda; color:#155724; padding:5px 12px; border-radius:15px; font-size:12px; font-weight:700;">● ACTIVE</span>'
+                    : '<span style="background:#f8d7da; color:#721c24; padding:5px 12px; border-radius:15px; font-size:12px; font-weight:700;">● INACTIVE</span>';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight:600;">${user.id}</td>
+                    <td>${name}</td>
+                    <td>${club}</td>
+                    <td>${statusTag}</td>
+                    <td><button class="view-btn" onclick="viewUser(${index})">View Workbook</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function viewUser(index) {
+            const user = usersData[index];
+            document.getElementById('modal-title').innerText = `Workbook: ${user.id}`;
+            
+            const grid = document.getElementById('modal-data');
+            grid.innerHTML = '';
+            
+            // Show last seen time in modal
+            const lastSeenDate = new Date(user.last_seen).toLocaleString();
+            grid.innerHTML = `
+                <div class="data-item" style="grid-column: span 2; background: #e3f2fd; border-left-color: #2196f3;">
+                    <div class="data-label">Last Interaction Time</div>
+                    <div class="data-value" style="font-weight:bold;">${lastSeenDate}</div>
+                </div>
+            `;
+
+            const skipKeys = ['userId'];
+            
+            Object.keys(user.data).forEach(key => {
+                if (skipKeys.includes(key)) return;
+                
+                let val = user.data[key];
+                if (val === '') val = '<span style="color:#aaa;">Empty</span>';
+                if (typeof val === 'boolean') val = val ? '✅ Yes' : '⬜ No';
+
+                const safeLabel = key.replace(/_/g, ' ');
+                
+                grid.innerHTML += `
+                    <div class="data-item">
+                        <div class="data-label">${safeLabel}</div>
+                        <div class="data-value">${val}</div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('user-modal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('user-modal').style.display = 'none';
+        }
+
+        // Close modal if clicked outside inner window
+        document.getElementById('user-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'user-modal') closeModal();
+        });
+
+        // Initialize and setup auto-refresh every 5 seconds
+        window.onload = () => {
+            fetchRecords();
+            setInterval(fetchRecords, 5000);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Certificate Preview</title>
+    <style>
+        body { font-family: 'Times New Roman', serif; display: flex; justify-content: center; align-items: center; background: #e0e0e0; min-height: 100vh; margin: 0; }
+        .certificate {
+            width: 800px;
+            height: 600px;
+            background: white;
+            border: 15px solid #0060AA; /* Royal Blue */
+            outline: 5px solid #F7B125; /* Golden Yellow */
+            outline-offset: -10px;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .cert-header { color: #D92361; /* Deep Pink */ font-size: 48px; font-weight: bold; margin-bottom: 20px; }
+        .cert-sub { font-size: 20px; color: #555; margin-bottom: 40px; }
+        .cert-name { font-size: 36px; border-bottom: 2px solid #333; display: inline-block; padding: 0 50px 10px; margin-bottom: 40px; font-style: italic; }
+        .cert-body { font-size: 18px; line-height: 1.6; margin-bottom: 50px; }
+        .footer { display: flex; justify-content: space-between; align-items: flex-end; position: absolute; bottom: 50px; left: 50px; right: 50px; }
+        .signature { text-align: center; }
+        .sig-line { width: 200px; border-bottom: 1px solid #333; margin-bottom: 10px; }
+        .logo { position: absolute; top: 40px; right: 40px; width: 100px; opacity:0.8; }
+        .print-btn { position: absolute; top: -50px; right: 0; padding: 10px 20px; background: #0060AA; color: white; border: none; cursor: pointer; font-family: sans-serif; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div style="position:relative;">
+        <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+        <div class="certificate">
+            <img src="reign_logo.png" class="logo" alt="Logo">
+            <div class="cert-header">CERTIFICATE OF COMPLETION</div>
+            <div class="cert-sub">This proudly certifies that</div>
+            
+            <div class="cert-name" id="certName">Member Name</div>
+            
+            <div class="cert-body">
+                of <strong id="certClub">Rotaract Club Name</strong><br><br>
+                has successfully completed the comprehensive Digital Council Workbook during the regional training assembly.<br>
+                They have demonstrated immense dedication to <strong>R</strong>otaract <strong>E</strong>mpowering <strong>I</strong>ndividuals for <strong>G</strong>rowth and <strong>N</strong>etworking.
+            </div>
+            
+            <div class="footer">
+                <div class="signature">
+                    <div class="sig-line"></div>
+                    <div>District Trainer</div>
+                </div>
+                <div style="color: #0060AA; font-weight: bold;">
+                    RI YEAR 2026-27 | RID 3131
+                </div>
+                <div class="signature">
+                    <div class="sig-line"></div>
+                    <div>DRR Dr. Karishma Awari</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Load data from localStorage (or backend) passed via URL params or just localStorage
+        window.onload = () => {
+            const data = JSON.parse(localStorage.getItem('council_workbook_data')) || {};
+            if(data.prof_name) document.getElementById('certName').innerText = data.prof_name;
+            if(data.prof_club) document.getElementById('certClub').innerText = data.prof_club;
+        };
+    </script>
+</body>
+</html>

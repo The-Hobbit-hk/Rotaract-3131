@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REIGN Council Workbook - RIY 2026-27</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="orientation-hint"
+        style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:white; padding:10px 20px; border-radius:20px; z-index:9999; font-size:14px; text-align:center; pointer-events:none;">
+        Rotate device for better view ↻
+    </div>
+
+    <!-- Sync Status -->
+    <div id="sync-status"
+        style="position:fixed; top:20px; right:20px; background:rgba(40, 167, 69, 0.9); color:white; padding:8px 15px; border-radius:20px; font-size:12px; font-weight:600; display:none; align-items:center; gap:8px; z-index:9999; box-shadow:0 4px 10px rgba(0,0,0,0.1); pointer-events:none; transition:opacity 0.3s;">
+        <span>✓ Changes Synced</span>
+    </div>
+
+    <!-- Swipe Hint -->
+    <div id="swipe-hint"
+        style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--primary); color:white; padding:10px 25px; border-radius:30px; z-index:9999; font-size:16px; font-weight:bold; align-items:center; gap:10px; pointer-events:none; transition:opacity 0.5s; box-shadow:var(--shadow);">
+        <span>Swipe to flip pages</span>
+        <span style="font-size:24px; animation: swipeAnim 1.5s infinite;">👈</span>
+    </div>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay"
+        style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--background); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+        <div
+            style="background:var(--white); padding:40px; border-radius:15px; box-shadow:var(--shadow); text-align:center; max-width:400px; width:90%;">
+            <img src="reign_logo.png" alt="REIGN Logo" style="width:150px; margin-bottom:20px;">
+            <h2 style="color:var(--primary); margin-bottom:10px;">Welcome Delegate!</h2>
+            <p style="margin-bottom:20px;">Please enter your registered **Rotary ID** to load your pre-filled workbook.
+            </p>
+            <div class="input-group" style="text-align:left;">
+                <label>Rotary ID</label>
+                <input type="text" id="login_id" placeholder="e.g. 12345678"
+                    onkeypress="if(event.key === 'Enter') performLogin()">
+            </div>
+            <button class="btn" style="width:100%;" onclick="performLogin()">Access Workbook</button>
+        </div>
+    </div>
+
+    <div class="book-container">
+        <div id="book" class="book">
+
+            <!-- Paper 1 -->
+            <div id="p1" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <div
+                        style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; height:100%; padding-bottom:40px;">
+                        <img src="reign_logo.png" alt="REIGN Logo"
+                            style="max-width:85%; max-height:60%; object-fit:contain; margin-bottom:20px;">
+                        <h2
+                            style="color:var(--primary); font-weight:800; letter-spacing:1px; margin:0; font-size:32px;">
+                            COUNCIL WORKBOOK</h2>
+                        <h3 style="color:var(--accent2); margin-top:10px;">RI YEAR 2026-27 | RID 3131</h3>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1>WELCOME</h1>
+                    <p>Welcome, leaders of District 3131! This workbook is your essential companion for the REIGN year.
+                        We are dedicated to empowering every individual for collective growth and networking excellence.
+                    </p>
+                    <p>As we embark on this journey together, remember that leadership is not just about a title; it's
+                        about the impact you create. This workbook will guide you in standardizing operations,
+                        evaluating performance, and planning a truly impactful year.</p>
+                    <p style="font-weight:bold; color:var(--primary); margin-top:auto;">DRR Dr. Karishma Awari</p>
+                </div>
+            </div>
+            <!-- Paper 2 -->
+            <div id="p2" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">YOUR PROFILE</h1>
+
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="prof_name" placeholder="Enter your full name">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Rotaract Club</label>
+                        <input type="text" id="prof_club" placeholder="Your club name">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Council Position</label>
+                        <input type="text" id="prof_pos" placeholder="">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Blood Group</label>
+                        <input type="text" id="prof_blood" placeholder="">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Date of Birth (DD-MM)</label>
+                        <input type="text" id="prof_dob" placeholder="">
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">MY ROTARACT "WHY"</h1>
+                    <p>Understanding your core motivation helps sustain your passion.</p>
+
+                    <div class="input-group">
+                        <label>The reason I joined (or stay engaged) is:</label>
+                        <textarea id="why_joined" rows="4" placeholder="Share your motivation..."></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Why I took up this district council role:</label>
+                        <textarea id="why_council" rows="4" placeholder=""></textarea>
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 3 -->
+            <div id="p3" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">MY ASPIRATIONS</h1>
+
+                    <div class="input-group">
+                        <label>One thing I hope to achieve for my Club/District:</label>
+                        <input type="text" id="asp_1" placeholder="">
+                    </div>
+
+                    <div class="input-group">
+                        <label>One thing I hope to achieve for myself:</label>
+                        <input type="text" id="asp_2" placeholder="">
+                    </div>
+
+                    <div class="input-group">
+                        <label>The legacy I want to leave behind this year:</label>
+                        <textarea id="asp_legacy" rows="3" placeholder=""></textarea>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">VALUES & BELIEFS</h1>
+                    <p>Select the top values that will guide your leadership this year:</p>
+                    <div class="input-group"><label>Core Values</label>
+                        <div style="display:flex; flex-wrap:wrap; gap:10px;"><label
+                                style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input
+                                    type="checkbox" id="chk_integrity"> Integrity</label><label
+                                style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input
+                                    type="checkbox" id="chk_service"> Service</label><label
+                                style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input
+                                    type="checkbox" id="chk_fellowship"> Fellowship</label><label
+                                style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input
+                                    type="checkbox" id="chk_diversity"> Diversity</label><label
+                                style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input
+                                    type="checkbox" id="chk_leadership"> Leadership</label><label
+                                style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input
+                                    type="checkbox" id="chk_innovation"> Innovation</label><label
+                                style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input
+                                    type="checkbox" id="chk_accountability"> Accountability</label><label
+                                style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input
+                                    type="checkbox" id="chk_empathy"> Empathy</label><label
+                                style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input
+                                    type="checkbox" id="chk_excellence"> Excellence</label></div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>How will you demonstrate these values in your daily actions?</label>
+                        <textarea id="values_impl" rows="3" placeholder=""></textarea>
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 4 -->
+            <div id="p4" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">LEADERSHIP QUALITIES</h1>
+                    <p>Rate yourself (1-10) and identify areas for improvement.</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+
+                        <div class="input-group">
+                            <label>Communication</label>
+                            <input type="text" id="rate_comm" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Empathy</label>
+                            <input type="text" id="rate_emp" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Vision/Strategy</label>
+                            <input type="text" id="rate_vis" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Technical Skills</label>
+                            <input type="text" id="rate_tech" placeholder="">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>What is one specific leadership quality you want to drastically improve?</label>
+                        <textarea id="leadership_improve" rows="2" placeholder=""></textarea>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">FUTURE GOALS</h1>
+                    <p>Where do you see yourself taking this journey?</p>
+
+                    <div class="input-group">
+                        <label>1-Year Rotaract Goal</label>
+                        <textarea id="goal_1yr" rows="2" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>3-Year Professional/Personal Goal</label>
+                        <textarea id="goal_3yr" rows="2" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>How does your current role bridge the gap to these future goals?</label>
+                        <textarea id="goal_align" rows="3" placeholder=""></textarea>
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 5 -->
+            <div id="p5" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">SMART GOALS (1/2)</h1>
+                    <p>Setting clear and achievable goals is essential for success.</p>
+
+                    <div class="input-group">
+                        <label>S - Specific (What exactly do you want to accomplish?)</label>
+                        <textarea id="smart_s" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>M - Measurable (How will you measure your progress?)</label>
+                        <textarea id="smart_m" rows="3" placeholder=""></textarea>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">SMART GOALS (2/2)</h1>
+
+                    <div class="input-group">
+                        <label>A - Attainable (Is it realistic given your resources?)</label>
+                        <textarea id="smart_a" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>R - Relevant (Why does this goal matter right now?)</label>
+                        <textarea id="smart_r" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>T - Time-bound (What is your deadline?)</label>
+                        <input type="text" id="smart_t" placeholder="">
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 6 -->
+            <div id="p6" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">ANTICIPATING CHALLENGES</h1>
+                    <p>Every journey has roadblocks. Let's identify them early.</p>
+
+                    <div class="input-group">
+                        <label>Time/Resource constraints I might face:</label>
+                        <textarea id="chal_time" rows="2" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Team or communication barriers:</label>
+                        <textarea id="chal_team" rows="2" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Other external obstacles:</label>
+                        <textarea id="chal_other" rows="2" placeholder=""></textarea>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">PROPOSED SOLUTIONS</h1>
+                    <p>For every challenge, there is a proactive solution.</p>
+
+                    <div class="input-group">
+                        <label>How I will manage my time/resources:</label>
+                        <textarea id="sol_time" rows="2" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Strategies to improve team dynamics:</label>
+                        <textarea id="sol_team" rows="2" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Who can I ask for help/mentorship?</label>
+                        <textarea id="sol_support" rows="2" placeholder=""></textarea>
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 7 -->
+            <div id="p7" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">SKILL DEVELOPMENT</h1>
+                    <p>Continuous learning is the hallmark of a great leader.</p>
+
+                    <div class="input-group">
+                        <label>Primary skill I need to acquire/hone:</label>
+                        <input type="text" id="skill_1" placeholder="">
+                    </div>
+
+                    <div class="input-group">
+                        <label>My action plan to develop this skill:</label>
+                        <textarea id="skill_1_plan" rows="2" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Secondary skill of interest:</label>
+                        <input type="text" id="skill_2" placeholder="">
+                    </div>
+
+                    <div class="input-group">
+                        <label>My action plan to develop this skill:</label>
+                        <textarea id="skill_2_plan" rows="2" placeholder=""></textarea>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">TEAM COLLABORATION</h1>
+                    <p>"None of us is as smart as all of us."</p>
+
+                    <div class="input-group">
+                        <label>Describe your preferred working/collaboration style:</label>
+                        <textarea id="collab_style" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>How do you typically handle disagreements within a team?</label>
+                        <textarea id="collab_conflict" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Favorite team management tool (e.g., Trello, Slack):</label>
+                        <input type="text" id="collab_tool" placeholder="">
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 8 -->
+            <div id="p8" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">FEEDBACK & REFLECTION</h1>
+                    <p>Feedback is the breakfast of champions.</p>
+
+                    <div class="input-group">
+                        <label>How do you react to constructive criticism?</label>
+                        <textarea id="feedback_rx" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>What is your approach to giving feedback to peers?</label>
+                        <textarea id="feedback_give" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>How often will you review your own performance? (e.g., Weekly, Monthly)</label>
+                        <input type="text" id="feedback_freq" placeholder="">
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">NETWORKING & RELATIONSHIPS</h1>
+                    <p>Networking is about farming, not hunting.</p>
+
+                    <div class="input-group">
+                        <label>Who are 3 key people you want to connect with this year?</label>
+                        <textarea id="network_conn" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>What value can you bring to these relationships?</label>
+                        <textarea id="network_value" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Name a potential mentor you wish to learn from:</label>
+                        <input type="text" id="network_mentor" placeholder="">
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 9 -->
+            <div id="p9" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">EVENT PLANNING</h1>
+                    <p>A quick checklist for your next major event.</p>
+                    <div class="input-group"><label>Event Phases & Checklist</label>
+                        <ul class="premium-checklist">
+                            <li onclick="const chk=this.querySelector('input'); chk.checked=!chk.checked; saveData();">
+                                <input type="checkbox" id="phase_objective_defined"
+                                    onclick="event.stopPropagation(); saveData();">
+                                <span>Objective defined</span>
+                            </li>
+                            <li onclick="const chk=this.querySelector('input'); chk.checked=!chk.checked; saveData();">
+                                <input type="checkbox" id="phase_budget_approved"
+                                    onclick="event.stopPropagation(); saveData();">
+                                <span>Budget approved</span>
+                            </li>
+                            <li onclick="const chk=this.querySelector('input'); chk.checked=!chk.checked; saveData();">
+                                <input type="checkbox" id="phase_venue_secured"
+                                    onclick="event.stopPropagation(); saveData();">
+                                <span>Venue secured</span>
+                            </li>
+                            <li onclick="const chk=this.querySelector('input'); chk.checked=!chk.checked; saveData();">
+                                <input type="checkbox" id="phase_marketing_started"
+                                    onclick="event.stopPropagation(); saveData();">
+                                <span>Marketing started</span>
+                            </li>
+                            <li onclick="const chk=this.querySelector('input'); chk.checked=!chk.checked; saveData();">
+                                <input type="checkbox" id="phase_logistics_planned"
+                                    onclick="event.stopPropagation(); saveData();">
+                                <span>Logistics planned</span>
+                            </li>
+                            <li onclick="const chk=this.querySelector('input'); chk.checked=!chk.checked; saveData();">
+                                <input type="checkbox" id="phase_post-event_review_scheduled"
+                                    onclick="event.stopPropagation(); saveData();">
+                                <span>Post-event review scheduled</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="input-group">
+                        <label>One flagship event idea for this year:</label>
+                        <textarea id="event_idea" rows="2" placeholder=""></textarea>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">PROJECT MANAGEMENT</h1>
+                    <p>Track your core district initiative.</p>
+
+                    <div class="input-group">
+                        <label>Initiative Name</label>
+                        <input type="text" id="proj_name" placeholder="">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Key Performance Indicator (KPI)</label>
+                        <input type="text" id="proj_kpi" placeholder="">
+                    </div>
+
+                    <div class="input-group">
+                        <label>List 3 major milestones for this initiative:</label>
+                        <textarea id="proj_milestones" rows="3" placeholder=""></textarea>
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 10 -->
+            <div id="p10" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">PUBLIC SPEAKING</h1>
+                    <p>Your voice has power. Prepare to use it.</p>
+
+                    <div class="input-group">
+                        <label>Topics you feel confident speaking about:</label>
+                        <textarea id="speak_topics" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>What is your biggest fear regarding public speaking and how will you overcome it?</label>
+                        <textarea id="speak_fear" rows="3" placeholder=""></textarea>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">CONFLICT RESOLUTION</h1>
+                    <p>Resolving disputes amicably keeps the team focused.</p>
+
+                    <div class="input-group">
+                        <label>Describe a past conflict and how it was resolved:</label>
+                        <textarea id="conflict_scenario" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Your standard protocol for resolving future conflicts:</label>
+                        <textarea id="conflict_approach" rows="3" placeholder=""></textarea>
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 11 -->
+            <div id="p11" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">TIME MANAGEMENT</h1>
+                    <p>Manage your energy, not just your time.</p>
+
+                    <div class="input-group">
+                        <label>Identify your top 2 biggest time-wasters:</label>
+                        <textarea id="time_wasters" rows="2" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Tactics to minimize distractions (e.g., Pomodoro, Time-blocking):</label>
+                        <textarea id="time_tactics" rows="3" placeholder=""></textarea>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">DELEGATION</h1>
+                    <p>Delegation empowers others while freeing you to lead.</p>
+
+                    <div class="input-group">
+                        <label>Tasks you should immediately delegate:</label>
+                        <textarea id="delegate_what" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Who on your team is ready for these responsibilities?</label>
+                        <textarea id="delegate_who" rows="3" placeholder=""></textarea>
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 12 -->
+            <div id="p12" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">STRATEGIC PLANNING</h1>
+                    <p>Looking at the big picture.</p>
+
+                    <div class="input-group">
+                        <label>What is the biggest opportunity for District 3131 right now?</label>
+                        <textarea id="strat_swot" rows="3" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>What is the biggest threat we must mitigate?</label>
+                        <textarea id="strat_risk" rows="3" placeholder=""></textarea>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">PROBLEM-SOLVING</h1>
+                    <p>Innovation requires creative problem-solving.</p>
+
+                    <div class="input-group">
+                        <label>What is your step-by-step process when faced with an unexpected crisis?</label>
+                        <textarea id="prob_process" rows="4" placeholder=""></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Your favorite motivational quote for tough times:</label>
+                        <input type="text" id="prob_quote" placeholder="">
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 13 -->
+            <div id="p13" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">ACTION PLAN (H1)</h1>
+                    <p>First half of the year focus.</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+
+                        <div class="input-group">
+                            <label>Jul:</label>
+                            <input type="text" id="act_jul" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Aug:</label>
+                            <input type="text" id="act_aug" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Sep:</label>
+                            <input type="text" id="act_sep" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Oct:</label>
+                            <input type="text" id="act_oct" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Nov:</label>
+                            <input type="text" id="act_nov" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Dec:</label>
+                            <input type="text" id="act_dec" placeholder="">
+                        </div>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">ACTION PLAN (H2)</h1>
+                    <p>Second half of the year focus.</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+
+                        <div class="input-group">
+                            <label>Jan:</label>
+                            <input type="text" id="act_jan" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Feb:</label>
+                            <input type="text" id="act_feb" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Mar:</label>
+                            <input type="text" id="act_mar" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Apr:</label>
+                            <input type="text" id="act_apr" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>May:</label>
+                            <input type="text" id="act_may" placeholder="">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Jun:</label>
+                            <input type="text" id="act_jun" placeholder="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 14 -->
+            <div id="p14" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">FOUR-WAY TEST</h1>
+                    <p>Of the things we think, say or do:</p>
+                    <ul style="list-style: none; margin-bottom: 20px;">
+                        <li style="margin-bottom: 5px;">1. Is it the <strong>TRUTH</strong>?</li>
+                        <li style="margin-bottom: 5px;">2. Is it <strong>FAIR</strong> to all concerned?</li>
+                        <li style="margin-bottom: 5px;">3. Will it build
+                            <strong>GOODWILL</strong>/<strong>FRIENDSHIPS</strong>?
+                        </li>
+                        <li style="margin-bottom: 5px;">4. Will it be <strong>BENEFICIAL</strong> to all concerned?</li>
+                    </ul>
+
+                    <div class="input-group">
+                        <label>How will I apply this in my role?</label>
+                        <textarea id="four_way_apply_2" rows="2" placeholder=""></textarea>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <h1 style="font-size: 24px;">PERSONAL COMMITMENT</h1>
+                    <p>Write a commitment statement for the year.</p>
+                    <div
+                        style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 2px dashed var(--accent2);">
+                        <p style="font-style: italic; margin-bottom: 0; font-size:14px;">"I am committed to achieving
+                            these goals by staying focused, upholding Rotaract values, and empowering individuals for
+                            growth and networking."</p>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Your Name & Signature (Type Name)</label>
+                        <input type="text" id="signature" placeholder="">
+                    </div>
+                </div>
+            </div>
+            <!-- Paper 15 -->
+            <div id="p15" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2
+                            style="font-size: 26px; color: #1a1a1a; letter-spacing: 3px; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid var(--accent2); display: inline-block; padding-bottom: 5px;">
+                            WORKBOOK CURATORS 📘</h2>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 25px; padding: 0 10px;">
+                        <!-- Curator 1 -->
+                        <div style="display: flex; align-items: flex-start; gap: 20px;">
+                            <div
+                                style="width: 100px; height: 130px; border-radius: 15px; background: #f0f0f0; flex-shrink: 0; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #ddd;">
+                                <img src="curator_dwijesh.jpg"
+                                    onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'height:100%; display:flex; align-items:center; justify-content:center; color:#999; font-size:12px;\'>PHOTO</div>'"
+                                    style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div style="padding-top: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="color: #f1c40f; font-size: 24px;">✦</span>
+                                    <h4 style="margin: 0; color: #1a1a1a; font-size: 18px; font-weight: 700;">PHF.
+                                        Karishma Awari</h4>
+                                </div>
+                                <p style="margin: 3px 0 0 32px; font-size: 14px; font-weight: 600; color: #444;">
+                                    District Rotaract Representative</p>
+                                <p style="margin: 2px 0 0 32px; font-size: 12px; color: #777;">RIY 2026-27</p>
+                            </div>
+                        </div>
+                        <!-- Curator 2 -->
+                        <div style="display: flex; align-items: flex-start; gap: 20px;">
+                            <div
+                                style="width: 100px; height: 130px; border-radius: 15px; background: #f0f0f0; flex-shrink: 0; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #ddd;">
+                                <img src="curator_drishti.jpg"
+                                    onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'height:100%; display:flex; align-items:center; justify-content:center; color:#999; font-size:12px;\'>PHOTO</div>'"
+                                    style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div style="padding-top: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="color: #f1c40f; font-size: 24px;">✦</span>
+                                    <h4 style="margin: 0; color: #1a1a1a; font-size: 18px; font-weight: 700;">PHF.
+                                        Harshvardhan Kale</h4>
+                                </div>
+                                <p style="margin: 3px 0 0 32px; font-size: 14px; font-weight: 600; color: #444;">
+                                    District General Secretary</p>
+                                <p style="margin: 2px 0 0 32px; font-size: 12px; color: #777;">RIY 2026-27</p>
+                            </div>
+                        </div>
+                        <!-- Curator 3 -->
+                        <!-- <div style="display: flex; align-items: flex-start; gap: 20px;">
+                            <div style="width: 100px; height: 130px; border-radius: 15px; background: #f0f0f0; flex-shrink: 0; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #ddd;">
+                                <img src="curator_amisha.jpg" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'height:100%; display:flex; align-items:center; justify-content:center; color:#999; font-size:12px;\'>PHOTO</div>'" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div style="padding-top: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="color: #f1c40f; font-size: 24px;">✦</span>
+                                    <h4 style="margin: 0; color: #1a1a1a; font-size: 18px; font-weight: 700;">Rtr. Amisha Chaudhan</h4>
+                                </div>
+                                <p style="margin: 3px 0 0 32px; font-size: 14px; font-weight: 600; color: #444;">District Event Chairperson</p>
+                                <p style="margin: 2px 0 0 32px; font-size: 12px; color: #777;">District Team Learning Seminar | RIY 2025-26</p>
+                            </div>
+                        </div> -->
+                    </div>
+                    <p style="text-align: center; font-size: 12px; color: #ccc; margin-top: auto; letter-spacing: 5px;">
+                        3 0</p>
+
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <div
+                        style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; height:100%; padding: 40px;">
+                        <img src="reign_logo.png" style="width: 120px; margin-bottom: 25px; opacity:0.8;">
+                        <h3 style="color:var(--primary); font-size: 24px; letter-spacing: 2px; margin-bottom: 15px;">
+                            ACKNOWLEDGMENTS</h3>
+                        <p style="font-size: 16px; line-height: 1.6; color: #555;">Special thanks to the District Team
+                            3131 for their tireless efforts in creating this interactive digital experience for our
+                            leaders.</p>
+                        <div style="margin-top: 30px; padding: 25px; border-top: 1px solid #eee; width: 90%;">
+                            <p style="font-size: 14px; font-style: italic; color: #888;">"Leadership is the capacity to
+                                translate vision into reality."</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!-- Paper 16 -->
+            <div id="p16" class="page">
+                <div class="front">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <div
+                        style="text-align: center; height:100%; display:flex; flex-direction:column; justify-content:center;">
+                        <h1 style="font-size: 36px; color:var(--primary);">CONGRATULATIONS</h1>
+                        <p style="font-size: 18px;">You have mapped out your year of REIGN.</p>
+                        <p>Keep this workbook updated, reflect on it often, and let it guide you to greatness!</p>
+                        <button class="btn" style="align-self: center; margin-top:20px;"
+                            onclick="window.open('certificate.html', '_blank')">Save & Generate Certificate</button>
+                    </div>
+                </div>
+                <div class="back">
+                    <img src="reign_logo.png" class="logo-watermark" alt="Watermark">
+                    <div
+                        style="text-align: center; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                        <img src="reign_logo.png" alt="REIGN Logo"
+                            style="width: 250px; opacity: 0.8; margin-bottom: 30px;">
+                        <!-- <h2 style="color:var(--accent2);">EMPOWER. GROW. NETWORK.</h2> -->
+                        <p style="font-weight:600;">Rotaract District 3131</p>
+                        <p>RIY 2026-27</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-controls">
+            <button class="nav-btn" onclick="prevPage()">&larr;</button>
+            <button class="nav-btn" onclick="nextPage()">&rarr;</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
