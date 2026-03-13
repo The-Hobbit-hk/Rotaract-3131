@@ -6,87 +6,71 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Database Configuration
+// Database Configuration Logic
 const isPostgres = !!(process.env.DATABASE_URL || process.env.POSTGRES_URL);
 const isVercel = !!process.env.VERCEL;
-let db; 
-let pool; 
+let db; // SQLite instance
+let pool; // Postgres pool
+let isInitialized = false;
 
+// Initialize Postgres if available
 if (isPostgres) {
-    console.log('Using PostgreSQL Database (Cloud)');
+    console.log('Postgres Detected. Initializing pool...');
     pool = new Pool({
         connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
         ssl: { rejectUnauthorized: false }
     });
 }
 
+// Global Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-let isInitialized = false;
-
-// Global Error Handler for detailed diagnostics
-app.use((err, req, res, next) => {
-    console.error('GLOBAL ERROR:', err);
-    if (res.headersSent) return next(err);
-    res.status(500).json({ 
-        error: 'Internal Server Error', 
-        message: err.message,
-        stack: isVercel ? 'Hidden' : err.stack 
-    });
-});
-
-if (!isPostgres && !isVercel) {
-    try {
-        const sqlite3 = require('sqlite3');
-        console.log('Using SQLite Database (Local)');
-        db = new sqlite3.Database('./database.sqlite', (err) => {
-            if (err) console.error('SQLite connection error:', err.message);
-            else {
-                db.run(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, data TEXT, last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
-                db.run(`CREATE TABLE IF NOT EXISTS registry (rotary_id TEXT PRIMARY KEY, name TEXT, club TEXT)`, () => seedRegistry());
-            }
-        });
-    } catch (e) {
-        console.warn('SQLite failed to load (expected on Vercel if DB not configured)');
-    }
-}
-
+// Function to ensure DB tables exist
 async function ensureDbReady() {
     if (isInitialized) return;
+
     if (!isPostgres) {
-        if (isVercel) throw new Error("POSTGRES_URL is missing in Vercel settings.");
-        isInitialized = true;
-        return;
+        if (isVercel) throw new Error("POSTGRES_URL is missing. SQLite is not supported on Vercel.");
+        
+        // Local SQLite Initialization
+        return new Promise((resolve, reject) => {
+            try {
+                const sqlite3 = require('sqlite3');
+                db = new sqlite3.Database('./database.sqlite', async (err) => {
+                    if (err) return reject(err);
+                    db.run(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, data TEXT, last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+                    db.run(`CREATE TABLE IF NOT EXISTS registry (rotary_id TEXT PRIMARY KEY, name TEXT, club TEXT)`, async () => {
+                        await seedRegistry();
+                        isInitialized = true;
+                        resolve();
+                    });
+                });
+            } catch (e) { reject(new Error("sqlite3 module not found")); }
+        });
     }
 
+    // Cloud Postgres Initialization
+    let client;
     try {
-        const client = await pool.connect();
-        try {
-            await client.query(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, data TEXT, last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
-            await client.query(`CREATE TABLE IF NOT EXISTS registry (rotary_id TEXT PRIMARY KEY, name TEXT, club TEXT)`);
-            const check = await client.query('SELECT COUNT(*) FROM registry');
-            if (parseInt(check.rows[0].count) < 30) {
-                await seedRegistry();
-            }
-            isInitialized = true;
-        } finally {
-            client.release();
+        client = await pool.connect();
+        await client.query(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, data TEXT, last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+        await client.query(`CREATE TABLE IF NOT EXISTS registry (rotary_id TEXT PRIMARY KEY, name TEXT, club TEXT)`);
+        
+        const countRes = await client.query('SELECT COUNT(*) FROM registry');
+        if (parseInt(countRes.rows[0].count) < 30) {
+            console.log('Cloud seeding required...');
+            await seedRegistry();
         }
+        isInitialized = true;
+        console.log('Postgres ready.');
     } catch (err) {
-        throw new Error(`Database connection failed. Verify your POSTGRES_URL. Error: ${err.message}`);
+        throw new Error(`Cloud DB Connect Fail: ${err.message}`);
+    } finally {
+        if (client) client.release();
     }
 }
-
-app.get('/api/test-db', async (req, res) => {
-    try {
-        await ensureDbReady();
-        res.json({ status: 'Connected', isPostgres, env: !!(process.env.DATABASE_URL || process.env.POSTGRES_URL) });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
 async function seedRegistry() {
     const members = [
@@ -133,7 +117,6 @@ async function seedRegistry() {
     ];
 
     if (isPostgres) {
-        // High-speed multi-row insert for PostgreSQL
         const values = [];
         const placeholders = [];
         members.forEach((m, i) => {
@@ -151,133 +134,115 @@ async function seedRegistry() {
     }
 }
 
-// Helper for DB calls
-async function dbQuery(sql, params = []) {
-    if (isPostgres) {
-        let count = 0;
-        const pgSql = sql.replace(/\?/g, () => `$${++count}`);
-        const res = await pool.query(pgSql, params);
-        return { rows: res.rows, row: res.rows[0] };
-    } else {
-        return new Promise((resolve, reject) => {
-            db.all(sql, params, (err, rows) => {
-                if (err) reject(err);
-                else resolve({ rows, row: rows[0] });
-            });
-        });
-    }
-}
+// Routes
+app.get('/api/test', (req, res) => res.json({ status: 'Online', isVercel }));
 
-async function dbRun(sql, params = []) {
-    if (isPostgres) {
-        let count = 0;
-        const pgSql = sql.replace(/\?/g, () => `$${++count}`);
-        await pool.query(pgSql, params);
-    } else {
-        return new Promise((resolve, reject) => {
-            db.run(sql, params, function(err) {
-                if (err) reject(err);
-                else resolve(this);
-            });
-        });
-    }
-}
-
-// API: Heartbeat
-app.post('/api/heartbeat', async (req, res) => {
-    await ensureDbReady();
-    const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: 'User ID required' });
+app.get('/api/debug/registry', async (req, res, next) => {
     try {
+        await ensureDbReady();
+        const sql = 'SELECT COUNT(*) as count FROM registry';
+        let result;
         if (isPostgres) {
-            await pool.query('INSERT INTO users (id, last_seen) VALUES ($1, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET last_seen = EXCLUDED.last_seen', [userId]);
+            const resData = await pool.query(sql);
+            result = { count: resData.rows[0].count };
         } else {
-            await dbRun('INSERT INTO users (id, last_seen) VALUES (?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET last_seen = excluded.last_seen', [userId]);
+            result = await new Promise((resolve, reject) => {
+                db.get(sql, (err, row) => err ? reject(err) : resolve(row));
+            });
         }
-        res.json({ message: 'Heartbeat received' });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+        res.json({ ...result, isPostgres, isInitialized });
+    } catch (e) { next(e); }
 });
 
-// API: Save User Data
-app.post('/api/save', async (req, res) => {
-    await ensureDbReady();
-    const { userId, data } = req.body;
-    if (!userId) return res.status(400).json({ error: 'User ID is required' });
-    const jsonData = JSON.stringify(data);
+app.post('/api/save', async (req, res, next) => {
     try {
+        await ensureDbReady();
+        const { userId, data } = req.body;
+        const jsonData = JSON.stringify(data);
         if (isPostgres) {
             await pool.query('INSERT INTO users (id, data, last_seen) VALUES ($1, $2, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET data = EXCLUDED.data, last_seen = EXCLUDED.last_seen', [userId, jsonData]);
         } else {
-            await dbRun('INSERT INTO users (id, data, last_seen) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET data = excluded.data, last_seen = excluded.last_seen', [userId, jsonData]);
-        }
-        res.json({ message: 'Progress saved successfully' });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// API: Load User Data
-app.get('/api/load/:userId', async (req, res) => {
-    await ensureDbReady();
-    const userId = req.params.userId;
-    try {
-        // Track activity
-        if (isPostgres) await pool.query('INSERT INTO users (id, last_seen) VALUES ($1, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET last_seen = EXCLUDED.last_seen', [userId]);
-        else await dbRun('INSERT INTO users (id, last_seen) VALUES (?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET last_seen = excluded.last_seen', [userId]);
-
-        const user = await dbQuery('SELECT data FROM users WHERE id = ?', [userId]);
-        
-        if (user.row && user.row.data) {
-            const parsedData = JSON.parse(user.row.data);
-            if (Object.keys(parsedData).length > 2) {
-                return res.json({ data: parsedData });
-            }
-        }
-
-        const reg = await dbQuery('SELECT name, club FROM registry WHERE rotary_id = ?', [userId]);
-        if (reg.row) {
-            return res.json({ 
-                data: { prof_name: reg.row.name, prof_club: reg.row.club }, 
-                prefilled: true 
+            await new Promise((resolve, reject) => {
+                db.run('INSERT INTO users (id, data, last_seen) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET data = excluded.data, last_seen = excluded.last_seen', [userId, jsonData], (err) => err ? reject(err) : resolve());
             });
         }
+        res.json({ message: 'Saved' });
+    } catch (e) { next(e); }
+});
+
+app.get('/api/load/:userId', async (req, res, next) => {
+    try {
+        await ensureDbReady();
+        const { userId } = req.params;
+        let userData;
         
+        if (isPostgres) {
+            const resData = await pool.query('SELECT data FROM users WHERE id = $1', [userId]);
+            userData = resData.rows[0];
+        } else {
+            userData = await new Promise((resolve, reject) => {
+                db.get('SELECT data FROM users WHERE id = ?', [userId], (err, row) => err ? reject(err) : resolve(row));
+            });
+        }
+
+        if (userData && userData.data) {
+            const parsed = JSON.parse(userData.data);
+            if (Object.keys(parsed).length > 2) return res.json({ data: parsed });
+        }
+
+        // Registry fallback
+        let regData;
+        if (isPostgres) {
+            const resReg = await pool.query('SELECT name, club FROM registry WHERE rotary_id = $1', [userId]);
+            regData = resReg.rows[0];
+        } else {
+            regData = await new Promise((resolve, reject) => {
+                db.get('SELECT name, club FROM registry WHERE rotary_id = ?', [userId], (err, row) => err ? reject(err) : resolve(row));
+            });
+        }
+
+        if (regData) {
+            return res.json({ data: { prof_name: regData.name, prof_club: regData.club }, prefilled: true });
+        }
         res.json({ data: {} });
-    } catch (err) { 
-        console.error('API Load Error:', err.message);
-        res.status(500).json({ error: err.message }); 
-    }
+    } catch (e) { next(e); }
 });
 
-// API: Admin Get All Data
-app.get('/api/admin/data', async (req, res) => {
-    await ensureDbReady();
+app.get('/api/admin/data', async (req, res, next) => {
     try {
-        const { rows } = await dbQuery('SELECT id, data, last_seen FROM users');
-        const parsedRows = rows.map(r => ({
-            id: r.id,
-            data: r.data ? JSON.parse(r.data) : {},
-            last_seen: r.last_seen
-        }));
-        res.json({ users: parsedRows });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+        await ensureDbReady();
+        let rows;
+        if (isPostgres) {
+            const resData = await pool.query('SELECT id, data, last_seen FROM users');
+            rows = resData.rows;
+        } else {
+            rows = await new Promise((resolve, reject) => {
+                db.all('SELECT id, data, last_seen FROM users', (err, rows) => err ? reject(err) : resolve(rows));
+            });
+        }
+        res.json({ users: rows.map(r => ({ ...r, data: r.data ? JSON.parse(r.data) : {} })) });
+    } catch (e) { next(e); }
 });
 
-// Diagnostic Endpoint (Hidden)
-app.get('/api/debug/registry', async (req, res) => {
-    await ensureDbReady();
+app.post('/api/heartbeat', async (req, res, next) => {
     try {
-        const check = await dbQuery('SELECT COUNT(*) as count FROM registry');
-        const sample = await dbQuery('SELECT * FROM registry LIMIT 5');
-        res.json({ 
-            count: check.row ? check.row.count : 0,
-            isPostgres: isPostgres,
-            sample: sample.rows,
-            isInitialized: isInitialized,
-            postgresUrlPrefix: (process.env.DATABASE_URL || process.env.POSTGRES_URL || "").substring(0, 15)
-        });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+        await ensureDbReady();
+        const { userId } = req.body;
+        if (isPostgres) {
+            await pool.query('INSERT INTO users (id, last_seen) VALUES ($1, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET last_seen = EXCLUDED.last_seen', [userId]);
+        } else {
+            await new Promise((resolve, reject) => {
+                db.run('INSERT INTO users (id, last_seen) VALUES (?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET last_seen = excluded.last_seen', [userId], (err) => err ? reject(err) : resolve());
+            });
+        }
+        res.json({ ok: true });
+    } catch (e) { next(e); }
 });
 
-// Start Server
-app.listen(port, () => {
-    console.log(`Server running at port ${port}`);
+// Final Error Handler
+app.use((err, req, res, next) => {
+    console.error('SERVER ERROR:', err);
+    res.status(500).json({ error: 'Internal Server Error', detail: err.message });
 });
+
+app.listen(port, () => console.log(`Server live on ${port}`));
