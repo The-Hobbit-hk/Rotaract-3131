@@ -216,11 +216,11 @@ app.get('/api/admin/data', async (req, res, next) => {
         await ensureDbReady();
         let rows;
         if (isPostgres) {
-            const resData = await pool.query('SELECT id, data, last_seen FROM users');
+            const resData = await pool.query('SELECT u.id, u.data, u.last_seen, r.name as reg_name, r.club as reg_club FROM users u LEFT JOIN registry r ON u.id = r.rotary_id');
             rows = resData.rows;
         } else {
             rows = await new Promise((resolve, reject) => {
-                db.all('SELECT id, data, last_seen FROM users', (err, rows) => err ? reject(err) : resolve(rows));
+                db.all('SELECT u.id, u.data, u.last_seen, r.name as reg_name, r.club as reg_club FROM users u LEFT JOIN registry r ON u.id = r.rotary_id', (err, rows) => err ? reject(err) : resolve(rows));
             });
         }
         res.json({ users: rows.map(r => ({ ...r, data: r.data ? JSON.parse(r.data) : {} })) });

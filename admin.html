@@ -203,8 +203,8 @@
             const now = new Date();
 
             usersData.forEach((user, index) => {
-                const name = user.data.prof_name || '<span style="color:#aaa;">Not filled</span>';
-                const club = user.data.prof_club || '<span style="color:#aaa;">Not filled</span>';
+                const name = user.data.prof_name || user.reg_name || '<span style="color:#aaa;">Not filled</span>';
+                const club = user.data.prof_club || user.reg_club || '<span style="color:#aaa;">Not filled</span>';
                 
                 // Robust Active Check
                 let lastSeen;
