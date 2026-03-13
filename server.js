@@ -15,10 +15,13 @@ let isInitialized = false;
 
 // Initialize Postgres if available
 if (isPostgres) {
+    const connStr = process.env.DATABASE_URL || process.env.POSTGRES_URL;
     console.log('Postgres Detected. Initializing pool...');
     pool = new Pool({
-        connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
-        ssl: { rejectUnauthorized: false }
+        connectionString: connStr.includes('?') ? connStr.split('?')[0] : connStr,
+        ssl: {
+            rejectUnauthorized: false
+        }
     });
 }
 
