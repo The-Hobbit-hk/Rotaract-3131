@@ -13,6 +13,7 @@ app.use(express.static(__dirname));
 
 // Database Configuration
 const isPostgres = !!(process.env.DATABASE_URL || process.env.POSTGRES_URL);
+const isVercel = !!process.env.VERCEL;
 let db; // For SQLite
 let pool; // For PostgreSQL
 
@@ -22,30 +23,24 @@ if (isPostgres) {
         connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
         ssl: { rejectUnauthorized: false }
     });
-    initPostgres();
-} else {
+} else if (!isVercel) {
     console.log('Using SQLite Database (Local)');
     db = new sqlite3.Database('./database.sqlite', (err) => {
         if (err) console.error('SQLite connection error:', err.message);
         else {
-            db.run(`CREATE TABLE IF NOT EXISTS users (
-                id TEXT PRIMARY KEY,
-                data TEXT,
-                last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )`);
-            db.run(`CREATE TABLE IF NOT EXISTS registry (
-                rotary_id TEXT PRIMARY KEY,
-                name TEXT,
-                club TEXT
-            )`, () => seedRegistry());
+            db.run(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, data TEXT, last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+            db.run(`CREATE TABLE IF NOT EXISTS registry (rotary_id TEXT PRIMARY KEY, name TEXT, club TEXT)`, () => seedRegistry());
         }
     });
+} else {
+    console.error('CRITICAL: Vercel environment detected but no Database URL found.');
 }
 
 let isInitialized = false;
 async function ensureDbReady() {
     if (isInitialized) return;
     if (!isPostgres) {
+        if (isVercel) throw new Error("Database not configured. Please set POSTGRES_URL in Vercel settings.");
         isInitialized = true;
         return;
     }
@@ -62,9 +57,9 @@ async function ensureDbReady() {
             await seedRegistry();
         }
         isInitialized = true;
-        console.log('Database finalized and ready.');
+        console.log('Database initialized.');
     } catch (err) {
-        console.error('Database check failed:', err.message);
+        console.error('Database connection failed:', err.message);
         throw err;
     } finally {
         if (client) client.release();
@@ -72,7 +67,6 @@ async function ensureDbReady() {
 }
 
 async function seedRegistry() {
-    console.log('Starting seed...');
     const members = [
         ["Rtr Prajwal Rajendra Bande", "Rotaract Club of Daund College", "11093273"],
         ["Shreeraj Nilkanth", "Rotaract Club of Panvel Industrial Town", "12000502"],
@@ -117,9 +111,15 @@ async function seedRegistry() {
     ];
 
     if (isPostgres) {
-        for (const [name, club, id] of members) {
-            await pool.query('INSERT INTO registry (name, club, rotary_id) VALUES ($1, $2, $3) ON CONFLICT (rotary_id) DO NOTHING', [name, club, id]);
-        }
+        // High-speed multi-row insert for PostgreSQL
+        const values = [];
+        const placeholders = [];
+        members.forEach((m, i) => {
+            values.push(...m);
+            placeholders.push(`($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`);
+        });
+        const sql = `INSERT INTO registry (name, club, rotary_id) VALUES ${placeholders.join(',')} ON CONFLICT (rotary_id) DO NOTHING`;
+        await pool.query(sql, values);
     } else {
         return new Promise((resolve) => {
             const stmt = db.prepare(`INSERT OR IGNORE INTO registry (name, club, rotary_id) VALUES (?, ?, ?)`);
@@ -259,6 +259,3 @@ app.get('/api/debug/registry', async (req, res) => {
 app.listen(port, () => {
     console.log(`Server running at port ${port}`);
 });
-
-// Windows background process keep-alive
-setInterval(() => {}, 1000 * 60 * 60);
