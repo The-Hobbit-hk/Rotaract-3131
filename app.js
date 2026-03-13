@@ -4,65 +4,66 @@ const bookContainer = document.querySelector('.book-container');
 const book = document.getElementById('book');
 
 function updateBookPosition() {
-    let showingSinglePage = false;
-    const isMobilePortrait = window.matchMedia("(max-width: 768px) and (orientation: portrait)").matches;
-
-    if (!bookContainer.style.transition) {
-        bookContainer.style.transition = 'transform 0.5s ease-in-out';
-        book.style.transition = 'transform 0.5s ease-in-out';
-    }
-
-    if (currentPage === 1) { 
-        book.style.transform = 'translateX(-25%)';
-        showingSinglePage = true;
-    } else if (currentPage === totalPages + 1) { 
-        book.style.transform = 'translateX(25%)';
-        showingSinglePage = true;
-    } else { 
-        book.style.transform = 'translateX(0)';
-    }
-
-    const effectiveWidth = showingSinglePage ? 450 : 900;
-    const ww = window.innerWidth;
-    const wh = window.innerHeight;
-    const scaleX = (ww - 20) / effectiveWidth;
-    const scaleY = (wh - (isMobilePortrait ? 180 : 150)) / 600; 
-    const scale = Math.min(1, scaleX, scaleY);
+    const isMobile = window.innerWidth <= 768;
+    const pages = document.querySelectorAll('.page');
     
-    if (scale > 0.1 && bookContainer) {
+    if (isMobile) {
+        // Mobile Slider Logic
+        pages.forEach((page, idx) => {
+            page.classList.remove('active-mobile');
+            if (idx + 1 === currentPage) {
+                page.classList.add('active-mobile');
+            }
+        });
+        bookContainer.style.transform = 'none';
+        book.style.transform = 'none';
+    } else {
+        // Desktop Book Logic
+        if (currentPage === 1) {
+            book.style.transform = 'translateX(-25%)';
+        } else if (currentPage === totalPages + 1) {
+            book.style.transform = 'translateX(25%)';
+        } else {
+            book.style.transform = 'translateX(0)';
+        }
+        
+        // Manual scaling only if screen is too small for 900px
+        const ww = window.innerWidth;
+        const scale = ww < 1000 ? (ww - 40) / 900 : 1;
         bookContainer.style.transform = `scale(${scale})`;
-    }
-
-    const hint = document.getElementById('orientation-hint');
-    if (hint) {
-        hint.style.display = (isMobilePortrait && !showingSinglePage) ? 'block' : 'none';
     }
 }
 window.addEventListener('resize', updateBookPosition);
 
 function nextPage() {
     if (currentPage <= totalPages) {
-        const page = document.getElementById(`p${currentPage}`);
-        if(page) {
-            page.classList.add('flipped');
-            page.style.zIndex = currentPage;
+        const isMobile = window.innerWidth <= 768;
+        if (!isMobile) {
+            const page = document.getElementById(`p${currentPage}`);
+            if (page) {
+                page.classList.add('flipped');
+                page.style.zIndex = currentPage;
+            }
         }
         currentPage++;
-        saveData();
         updateBookPosition();
+        saveData();
     }
 }
 
 function prevPage() {
     if (currentPage > 1) {
         currentPage--;
-        const page = document.getElementById(`p${currentPage}`);
-        if(page) {
-            page.classList.remove('flipped');
-            page.style.zIndex = totalPages - currentPage + 1;
+        const isMobile = window.innerWidth <= 768;
+        if (!isMobile) {
+            const page = document.getElementById(`p${currentPage}`);
+            if (page) {
+                page.classList.remove('flipped');
+                page.style.zIndex = totalPages - currentPage + 1;
+            }
         }
-        saveData();
         updateBookPosition();
+        saveData();
     }
 }
 
