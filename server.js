@@ -122,7 +122,9 @@ async function seedRegistry() {
 // Helper for DB calls
 async function dbQuery(sql, params = []) {
     if (isPostgres) {
-        const res = await pool.query(sql.replace(/\?/g, (match, i) => `$${params.indexOf(params[i]) + 1}`), params);
+        let count = 0;
+        const pgSql = sql.replace(/\?/g, () => `$${++count}`);
+        const res = await pool.query(pgSql, params);
         return { rows: res.rows, row: res.rows[0] };
     } else {
         return new Promise((resolve, reject) => {
@@ -136,7 +138,9 @@ async function dbQuery(sql, params = []) {
 
 async function dbRun(sql, params = []) {
     if (isPostgres) {
-        await pool.query(sql.replace(/\?/g, (match, i) => `$${params.indexOf(params[i]) + 1}`), params);
+        let count = 0;
+        const pgSql = sql.replace(/\?/g, () => `$${++count}`);
+        await pool.query(pgSql, params);
     } else {
         return new Promise((resolve, reject) => {
             db.run(sql, params, function(err) {

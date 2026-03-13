@@ -151,7 +151,8 @@ function performLogin() {
     if (id) {
         currentUser = id;
         localStorage.setItem('reign_user_id', currentUser);
-        saveData(); // Immediate sync to show as Active in Admin Panel
+        // Removed saveData() here because it overwrites pre-fill with empty data.
+        // /api/load already tracks activity on the server.
         checkLogin();
     }
 }
