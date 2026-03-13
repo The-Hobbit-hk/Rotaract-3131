@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const sqlite3 = require('sqlite3');
 const { Pool } = require('pg');
 const path = require('path');
 
@@ -24,16 +23,19 @@ if (isPostgres) {
         ssl: { rejectUnauthorized: false }
     });
 } else if (!isVercel) {
-    console.log('Using SQLite Database (Local)');
-    db = new sqlite3.Database('./database.sqlite', (err) => {
-        if (err) console.error('SQLite connection error:', err.message);
-        else {
-            db.run(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, data TEXT, last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
-            db.run(`CREATE TABLE IF NOT EXISTS registry (rotary_id TEXT PRIMARY KEY, name TEXT, club TEXT)`, () => seedRegistry());
-        }
-    });
-} else {
-    console.error('CRITICAL: Vercel environment detected but no Database URL found.');
+    try {
+        const sqlite3 = require('sqlite3');
+        console.log('Using SQLite Database (Local)');
+        db = new sqlite3.Database('./database.sqlite', (err) => {
+            if (err) console.error('SQLite connection error:', err.message);
+            else {
+                db.run(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, data TEXT, last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+                db.run(`CREATE TABLE IF NOT EXISTS registry (rotary_id TEXT PRIMARY KEY, name TEXT, club TEXT)`, () => seedRegistry());
+            }
+        });
+    } catch (e) {
+        console.warn('SQLite failed to load (expected on Vercel if DB not configured)');
+    }
 }
 
 let isInitialized = false;
