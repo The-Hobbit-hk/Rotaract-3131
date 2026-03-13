@@ -43,24 +43,38 @@ if (isPostgres) {
 }
 
 async function initPostgres() {
-    const client = await pool.connect();
+    let client;
     try {
+        client = await pool.connect();
+        console.log('PostgreSQL Connected successfully');
+        
         await client.query(`CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
             data TEXT,
             last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
+        
         await client.query(`CREATE TABLE IF NOT EXISTS registry (
             rotary_id TEXT PRIMARY KEY,
             name TEXT,
             club TEXT
         )`);
-        console.log('PostgreSQL Tables initialized');
-        await seedRegistry();
+        
+        console.log('PostgreSQL Tables verified/created');
+        
+        // Check if registry is already seeded to avoid redundant loops
+        const check = await client.query('SELECT COUNT(*) FROM registry');
+        if (parseInt(check.rows[0].count) < 30) {
+            console.log('Seeding registry into Cloud Database...');
+            await seedRegistry();
+            console.log('Seeding complete');
+        } else {
+            console.log('Registry already populated in Cloud');
+        }
     } catch (err) {
-        console.error('PostgreSQL init error:', err.message);
+        console.error('PostgreSQL initialization failed:', err.message);
     } finally {
-        client.release();
+        if (client) client.release();
     }
 }
 
@@ -225,6 +239,19 @@ app.get('/api/admin/data', async (req, res) => {
             last_seen: r.last_seen
         }));
         res.json({ users: parsedRows });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Diagnostic Endpoint (Hidden)
+app.get('/api/debug/registry', async (req, res) => {
+    try {
+        const check = await dbQuery('SELECT COUNT(*) as count FROM registry');
+        const sample = await dbQuery('SELECT * FROM registry LIMIT 3');
+        res.json({ 
+            count: check.row.count,
+            isPostgres: isPostgres,
+            sample: sample.rows
+        });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
