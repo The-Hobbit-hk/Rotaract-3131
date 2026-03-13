@@ -42,43 +42,37 @@ if (isPostgres) {
     });
 }
 
-async function initPostgres() {
+let isInitialized = false;
+async function ensureDbReady() {
+    if (isInitialized) return;
+    if (!isPostgres) {
+        isInitialized = true;
+        return;
+    }
+
     let client;
     try {
         client = await pool.connect();
-        console.log('PostgreSQL Connected successfully');
+        await client.query(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, data TEXT, last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+        await client.query(`CREATE TABLE IF NOT EXISTS registry (rotary_id TEXT PRIMARY KEY, name TEXT, club TEXT)`);
         
-        await client.query(`CREATE TABLE IF NOT EXISTS users (
-            id TEXT PRIMARY KEY,
-            data TEXT,
-            last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )`);
-        
-        await client.query(`CREATE TABLE IF NOT EXISTS registry (
-            rotary_id TEXT PRIMARY KEY,
-            name TEXT,
-            club TEXT
-        )`);
-        
-        console.log('PostgreSQL Tables verified/created');
-        
-        // Check if registry is already seeded to avoid redundant loops
         const check = await client.query('SELECT COUNT(*) FROM registry');
         if (parseInt(check.rows[0].count) < 30) {
-            console.log('Seeding registry into Cloud Database...');
+            console.log('Seeding cloud registry...');
             await seedRegistry();
-            console.log('Seeding complete');
-        } else {
-            console.log('Registry already populated in Cloud');
         }
+        isInitialized = true;
+        console.log('Database finalized and ready.');
     } catch (err) {
-        console.error('PostgreSQL initialization failed:', err.message);
+        console.error('Database check failed:', err.message);
+        throw err;
     } finally {
         if (client) client.release();
     }
 }
 
 async function seedRegistry() {
+    console.log('Starting seed...');
     const members = [
         ["Rtr Prajwal Rajendra Bande", "Rotaract Club of Daund College", "11093273"],
         ["Shreeraj Nilkanth", "Rotaract Club of Panvel Industrial Town", "12000502"],
@@ -127,9 +121,11 @@ async function seedRegistry() {
             await pool.query('INSERT INTO registry (name, club, rotary_id) VALUES ($1, $2, $3) ON CONFLICT (rotary_id) DO NOTHING', [name, club, id]);
         }
     } else {
-        const stmt = db.prepare(`INSERT OR IGNORE INTO registry (name, club, rotary_id) VALUES (?, ?, ?)`);
-        members.forEach(m => stmt.run(m));
-        stmt.finalize();
+        return new Promise((resolve) => {
+            const stmt = db.prepare(`INSERT OR IGNORE INTO registry (name, club, rotary_id) VALUES (?, ?, ?)`);
+            members.forEach(m => stmt.run(m));
+            stmt.finalize(() => resolve());
+        });
     }
 }
 
@@ -167,6 +163,7 @@ async function dbRun(sql, params = []) {
 
 // API: Heartbeat
 app.post('/api/heartbeat', async (req, res) => {
+    await ensureDbReady();
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: 'User ID required' });
     try {
@@ -181,6 +178,7 @@ app.post('/api/heartbeat', async (req, res) => {
 
 // API: Save User Data
 app.post('/api/save', async (req, res) => {
+    await ensureDbReady();
     const { userId, data } = req.body;
     if (!userId) return res.status(400).json({ error: 'User ID is required' });
     const jsonData = JSON.stringify(data);
@@ -196,6 +194,7 @@ app.post('/api/save', async (req, res) => {
 
 // API: Load User Data
 app.get('/api/load/:userId', async (req, res) => {
+    await ensureDbReady();
     const userId = req.params.userId;
     try {
         // Track activity
@@ -204,18 +203,15 @@ app.get('/api/load/:userId', async (req, res) => {
 
         const user = await dbQuery('SELECT data FROM users WHERE id = ?', [userId]);
         
-        // If data exists, check if it's actually meaningful (not just an empty object)
         if (user.row && user.row.data) {
             const parsedData = JSON.parse(user.row.data);
-            if (Object.keys(parsedData).length > 2) { // Prof Name and Club are 2, if there's more, it's a real save
+            if (Object.keys(parsedData).length > 2) {
                 return res.json({ data: parsedData });
             }
         }
 
-        // Fallback to registry if no real data found
         const reg = await dbQuery('SELECT name, club FROM registry WHERE rotary_id = ?', [userId]);
         if (reg.row) {
-            console.log(`Pre-filling for ${userId}: ${reg.row.name}`);
             return res.json({ 
                 data: { prof_name: reg.row.name, prof_club: reg.row.club }, 
                 prefilled: true 
@@ -231,6 +227,7 @@ app.get('/api/load/:userId', async (req, res) => {
 
 // API: Admin Get All Data
 app.get('/api/admin/data', async (req, res) => {
+    await ensureDbReady();
     try {
         const { rows } = await dbQuery('SELECT id, data, last_seen FROM users');
         const parsedRows = rows.map(r => ({
@@ -244,13 +241,16 @@ app.get('/api/admin/data', async (req, res) => {
 
 // Diagnostic Endpoint (Hidden)
 app.get('/api/debug/registry', async (req, res) => {
+    await ensureDbReady();
     try {
         const check = await dbQuery('SELECT COUNT(*) as count FROM registry');
-        const sample = await dbQuery('SELECT * FROM registry LIMIT 3');
+        const sample = await dbQuery('SELECT * FROM registry LIMIT 5');
         res.json({ 
-            count: check.row.count,
+            count: check.row ? check.row.count : 0,
             isPostgres: isPostgres,
-            sample: sample.rows
+            sample: sample.rows,
+            isInitialized: isInitialized,
+            postgresUrlPrefix: (process.env.DATABASE_URL || process.env.POSTGRES_URL || "").substring(0, 15)
         });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });

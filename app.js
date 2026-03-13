@@ -69,18 +69,26 @@ function prevPage() {
 // Data Persistence via Backend
 let currentUser = localStorage.getItem('reign_user_id') || null;
 
+let isUpdatingFromLoad = false;
 async function saveData() {
-    if (!currentUser) return;
+    if (!currentUser || isUpdatingFromLoad) return;
 
     const inputs = document.querySelectorAll('input:not(#login_id), textarea');
     const data = {};
+    let hasContent = false;
+    
     inputs.forEach(input => {
         if (input.type === 'checkbox') {
             data[input.id] = input.checked;
+            if (input.checked) hasContent = true;
         } else {
             data[input.id] = input.value;
+            if (input.value.trim().length > 0) hasContent = true;
         }
     });
+
+    // Don't save if it's just an empty workbook, let registry handle pre-fill
+    if (!hasContent) return;
 
     try {
         await fetch('/api/save', {
@@ -89,7 +97,6 @@ async function saveData() {
             body: JSON.stringify({ userId: currentUser, data })
         });
         
-        // Global Sync Feedback
         const status = document.getElementById('sync-status');
         if (status) {
             status.style.display = 'flex';
@@ -100,20 +107,19 @@ async function saveData() {
         
     } catch (e) {
         console.error('Failed to save to server:', e);
-        // Fallback to local storage if offline
         localStorage.setItem('council_workbook_data', JSON.stringify(data));
     }
 }
 
 async function loadData() {
     if (!currentUser) return;
+    isUpdatingFromLoad = true;
 
     try {
         const response = await fetch(`/api/load/${currentUser}`);
         const result = await response.json();
         
         let data = result.data;
-        // Fallback check
         if (!data || Object.keys(data).length === 0) {
             const localData = localStorage.getItem('council_workbook_data');
             if (localData) Object.assign(data, JSON.parse(localData));
@@ -133,6 +139,8 @@ async function loadData() {
         }
     } catch (e) {
         console.error('Failed to load from server:', e);
+    } finally {
+        setTimeout(() => { isUpdatingFromLoad = false; }, 500);
     }
 }
 
