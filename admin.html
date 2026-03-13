@@ -127,7 +127,7 @@
         <div class="header">
             <div>
                 <h1 style="margin:0;">Council Workbooks Monitor</h1>
-                <p style="margin:0; color:#666;">View and manage 60 RIY 2026-27 District 3131 council members.</p>
+                <p style="margin:0; color:#666;">View 60 RIY 2026-27 District 3131 council members. <span id="sync-indicator" style="margin-left:10px; font-size:11px; font-weight:bold; transition:color 0.5s;">Syncing...</span></p>
             </div>
             <img src="reign_logo.png" alt="REIGN Logo">
         </div>
@@ -161,16 +161,30 @@
 
     <script>
         let usersData = [];
+        let currentlyViewingIndex = -1;
 
         async function fetchRecords() {
             try {
                 const response = await fetch('/api/admin/data');
                 const result = await response.json();
                 usersData = result.users || [];
+                
+                // Update specific indicators
+                const indicator = document.getElementById('sync-indicator');
+                if (indicator) {
+                    indicator.innerText = `Last Sync: ${new Date().toLocaleTimeString()}`;
+                    indicator.style.color = 'var(--primary)';
+                    setTimeout(() => { indicator.style.color = '#666'; }, 1000);
+                }
+                
                 renderTable();
+                
+                // Update modal if open
+                if (currentlyViewingIndex !== -1) {
+                    viewUser(currentlyViewingIndex);
+                }
             } catch (e) {
                 console.error("Failed to fetch admin data", e);
-                // Only show error if no data already present
                 if (usersData.length === 0) {
                     document.getElementById('user-table-body').innerHTML = '<tr><td colspan="5" style="text-align:center;color:red;">Failed to load records. Ensure Node server is running.</td></tr>';
                 }
@@ -187,20 +201,25 @@
             }
 
             const now = new Date();
-            const nowUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 
-                                   now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds());
 
             usersData.forEach((user, index) => {
                 const name = user.data.prof_name || '<span style="color:#aaa;">Not filled</span>';
                 const club = user.data.prof_club || '<span style="color:#aaa;">Not filled</span>';
                 
-                // Active calculation (last 2 minutes)
-                // SQLite CURRENT_TIMESTAMP is UTC 'YYYY-MM-DD HH:MM:SS'
-                // We parse it as UTC by adding 'Z'
-                const lastSeenStr = user.last_seen.replace(' ', 'T') + 'Z';
-                const lastSeen = new Date(lastSeenStr);
-                const diffMs = nowUtc - lastSeen.getTime();
-                const isActive = diffMs < 120000; // 2 minutes in ms
+                // Robust Active Check
+                let lastSeen;
+                if (!user.last_seen) {
+                    lastSeen = new Date(0);
+                } else if (typeof user.last_seen === 'string' && user.last_seen.includes(' ')) {
+                    // SQLite style: "2026-03-13 12:00:00" -> Force UTC
+                    lastSeen = new Date(user.last_seen.replace(' ', 'T') + 'Z');
+                } else {
+                    // Postgres/ISO style: "2026-03-13T12:00:00Z"
+                    lastSeen = new Date(user.last_seen);
+                }
+
+                const diffMs = now.getTime() - lastSeen.getTime();
+                const isActive = diffMs < 120000; // 2 minutes
                 
                 const statusTag = isActive 
                     ? '<span style="background:#d4edda; color:#155724; padding:5px 12px; border-radius:15px; font-size:12px; font-weight:700;">● ACTIVE</span>'
@@ -212,16 +231,23 @@
                     <td>${name}</td>
                     <td>${club}</td>
                     <td>${statusTag}</td>
-                    <td><button class="view-btn" onclick="viewUser(${index})">View Workbook</button></td>
+                    <td><button class="view-btn" onclick="openUserModal(${index})">View Workbook</button></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
+        function openUserModal(index) {
+            currentlyViewingIndex = index;
+            viewUser(index);
+            document.getElementById('user-modal').style.display = 'block';
+        }
+
         function viewUser(index) {
             const user = usersData[index];
-            document.getElementById('modal-title').innerText = `Workbook: ${user.id}`;
+            if (!user) return;
             
+            document.getElementById('modal-title').innerText = `Workbook: ${user.id}`;
             const grid = document.getElementById('modal-data');
             grid.innerHTML = '';
             
@@ -229,7 +255,7 @@
             const lastSeenDate = new Date(user.last_seen).toLocaleString();
             grid.innerHTML = `
                 <div class="data-item" style="grid-column: span 2; background: #e3f2fd; border-left-color: #2196f3;">
-                    <div class="data-label">Last Interaction Time</div>
+                    <div class="data-label">Last Activity Detected</div>
                     <div class="data-value" style="font-weight:bold;">${lastSeenDate}</div>
                 </div>
             `;
@@ -257,6 +283,7 @@
         }
 
         function closeModal() {
+            currentlyViewingIndex = -1;
             document.getElementById('user-modal').style.display = 'none';
         }
 
