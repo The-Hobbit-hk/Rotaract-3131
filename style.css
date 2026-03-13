@@ -131,8 +131,25 @@ body {
     }
 
     .page.active-mobile {
-        display: block; /* Show only current page */
+        display: block; /* Show current card */
         animation: slideIn 0.3s ease-out;
+    }
+
+    .page.active-mobile .front, 
+    .page.active-mobile .back {
+        display: none;
+        width: 100% !important;
+        height: 100% !important;
+        position: relative;
+    }
+
+    .page.active-mobile.show-front .front {
+        display: flex;
+    }
+
+    .page.active-mobile.show-back .back {
+        display: flex;
+        transform: none !important; /* Remove 180deg flip on mobile */
     }
 
     .front, .back {
@@ -140,10 +157,6 @@ body {
         box-shadow: none;
         overflow-y: auto; /* Allow scrolling inside page cards */
         backface-visibility: visible;
-    }
-
-    .back {
-        display: none; /* Backs are handled as separate "mobile pages" in JS now */
     }
 
     .input-group input, .input-group textarea {

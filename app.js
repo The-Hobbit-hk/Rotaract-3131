@@ -1,5 +1,6 @@
 let currentPage = 1;
 let totalPages = 0;
+let showingBackOnMobile = false;
 const bookContainer = document.querySelector('.book-container');
 const book = document.getElementById('book');
 
@@ -10,15 +11,21 @@ function updateBookPosition() {
     if (isMobile) {
         // Mobile Slider Logic
         pages.forEach((page, idx) => {
-            page.classList.remove('active-mobile');
+            page.classList.remove('active-mobile', 'show-front', 'show-back');
             if (idx + 1 === currentPage) {
                 page.classList.add('active-mobile');
+                if (showingBackOnMobile) {
+                    page.classList.add('show-back');
+                } else {
+                    page.classList.add('show-front');
+                }
             }
         });
         bookContainer.style.transform = 'none';
         book.style.transform = 'none';
     } else {
         // Desktop Book Logic
+        showingBackOnMobile = false; // Reset mobile state if resized to desktop
         if (currentPage === 1) {
             book.style.transform = 'translateX(-25%)';
         } else if (currentPage === totalPages + 1) {
@@ -36,35 +43,51 @@ function updateBookPosition() {
 window.addEventListener('resize', updateBookPosition);
 
 function nextPage() {
-    if (currentPage <= totalPages) {
-        const isMobile = window.innerWidth <= 768;
-        if (!isMobile) {
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        if (!showingBackOnMobile) {
+            showingBackOnMobile = true;
+        } else if (currentPage <= totalPages) {
+            showingBackOnMobile = false;
+            currentPage++;
+        }
+    } else {
+        if (currentPage <= totalPages) {
             const page = document.getElementById(`p${currentPage}`);
             if (page) {
                 page.classList.add('flipped');
                 page.style.zIndex = currentPage;
             }
+            currentPage++;
         }
-        currentPage++;
-        updateBookPosition();
-        saveData();
     }
+    updateBookPosition();
+    saveData();
 }
 
 function prevPage() {
-    if (currentPage > 1) {
-        currentPage--;
-        const isMobile = window.innerWidth <= 768;
-        if (!isMobile) {
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        if (showingBackOnMobile) {
+            showingBackOnMobile = false;
+        } else if (currentPage > 1) {
+            currentPage--;
+            showingBackOnMobile = true;
+        }
+    } else {
+        if (currentPage > 1) {
+            currentPage--;
             const page = document.getElementById(`p${currentPage}`);
             if (page) {
                 page.classList.remove('flipped');
                 page.style.zIndex = totalPages - currentPage + 1;
             }
         }
-        updateBookPosition();
-        saveData();
     }
+    updateBookPosition();
+    saveData();
 }
 
 // Data Persistence via Backend
