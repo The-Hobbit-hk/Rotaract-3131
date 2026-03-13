@@ -20,12 +20,20 @@ if (isPostgres) {
     });
 }
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static(__dirname));
+let isInitialized = false;
 
 // Global Error Handler for detailed diagnostics
-app.use((err, req, res, next) => { else if (!isVercel) {
+app.use((err, req, res, next) => {
+    console.error('GLOBAL ERROR:', err);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ 
+        error: 'Internal Server Error', 
+        message: err.message,
+        stack: isVercel ? 'Hidden' : err.stack 
+    });
+});
+
+if (!isPostgres && !isVercel) {
     try {
         const sqlite3 = require('sqlite3');
         console.log('Using SQLite Database (Local)');
