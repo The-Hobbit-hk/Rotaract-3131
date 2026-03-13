@@ -16,9 +16,9 @@ if (isPostgres) {
     console.log('Using PostgreSQL Database (Cloud)');
     pool = new Pool({
         connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
-        ssl: { rejectUnauthorized: false }
-    });
-}
+app.use(cors());
+app.use(express.json());
+app.use(express.static(__dirname));
 
 let isInitialized = false;
 
