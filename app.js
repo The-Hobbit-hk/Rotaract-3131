@@ -90,10 +90,37 @@ function prevPage() {
     saveData();
 }
 
+// Sync Status Management
+function showSyncStatus(state, message) {
+    const status = document.getElementById('sync-status');
+    const text = status ? status.querySelector('.sync-text') : null;
+    const icon = status ? status.querySelector('.sync-icon') : null;
+    
+    if (!status || !text || !icon) return;
+
+    status.classList.remove('success', 'syncing', 'offline');
+    status.classList.add(state);
+    text.innerText = message || '';
+    icon.innerText = (state === 'syncing') ? '⏳' : (state === 'offline' ? '⚠️' : '✓');
+    
+    status.style.display = 'flex';
+    status.style.opacity = '1';
+
+    if (state === 'success') {
+        setTimeout(() => { 
+            if (status.classList.contains('success')) {
+                status.style.opacity = '0';
+                setTimeout(() => { if(status.style.opacity === '0') status.style.display = 'none'; }, 500);
+            }
+        }, 3000);
+    }
+}
+
 // Data Persistence via Backend
 let currentUser = localStorage.getItem('reign_user_id') || null;
-
 let isUpdatingFromLoad = false;
+let syncTimeout = null;
+
 async function saveData() {
     if (!currentUser || isUpdatingFromLoad) return;
 
@@ -111,61 +138,100 @@ async function saveData() {
         }
     });
 
-    // Don't save if it's just an empty workbook, let registry handle pre-fill
+    // 1. Instant Local Save (Critical for offline safety)
+    localStorage.setItem(`workbook_local_${currentUser}`, JSON.stringify(data));
+    localStorage.setItem(`workbook_needs_sync_${currentUser}`, 'true');
+
     if (!hasContent) return;
 
+    // 2. Debounced Cloud Sync
+    if (syncTimeout) clearTimeout(syncTimeout);
+    
+    if (!navigator.onLine) {
+        showSyncStatus('offline', 'Offline (Saved Locally)');
+        return;
+    }
+
+    showSyncStatus('syncing', 'Syncing...');
+    syncTimeout = setTimeout(() => syncToCloud(data), 2000);
+}
+
+async function syncToCloud(data) {
+    if (!navigator.onLine || !currentUser) return;
+    
     try {
-        await fetch('/api/save', {
+        const response = await fetch('/api/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: currentUser, data })
         });
         
-        const status = document.getElementById('sync-status');
-        if (status) {
-            status.style.display = 'flex';
-            status.style.opacity = '1';
-            setTimeout(() => { status.style.opacity = '0'; }, 1500);
-            setTimeout(() => { if(status.style.opacity === '0') status.style.display = 'none'; }, 1800);
+        if (response.ok) {
+            localStorage.removeItem(`workbook_needs_sync_${currentUser}`);
+            showSyncStatus('success', 'Changes Synced');
+        } else {
+            throw new Error("Server rejected save");
         }
-        
     } catch (e) {
-        console.error('Failed to save to server:', e);
-        localStorage.setItem('council_workbook_data', JSON.stringify(data));
+        console.error('Cloud Sync Failed:', e);
+        showSyncStatus('offline', 'Sync Delayed (Saved Locally)');
     }
 }
+
+window.addEventListener('online', () => {
+    const data = localStorage.getItem(`workbook_local_${currentUser}`);
+    const needsSync = localStorage.getItem(`workbook_needs_sync_${currentUser}`);
+    if (needsSync && data) {
+        syncToCloud(JSON.parse(data));
+    } else {
+        showSyncStatus('success', 'Back Online');
+    }
+});
+
+window.addEventListener('offline', () => {
+    showSyncStatus('offline', 'Offline Mode Active');
+});
 
 async function loadData() {
     if (!currentUser) return;
     isUpdatingFromLoad = true;
-
+    
+    // Prioritize local unsynced data
+    const localData = localStorage.getItem(`workbook_local_${currentUser}`);
+    const needsSync = localStorage.getItem(`workbook_needs_sync_${currentUser}`);
+    
     try {
         const response = await fetch(`/api/load/${currentUser}`);
         const result = await response.json();
+        const serverData = result.data || {};
         
-        let data = result.data;
-        if (!data || Object.keys(data).length === 0) {
-            const localData = localStorage.getItem('council_workbook_data');
-            if (localData) Object.assign(data, JSON.parse(localData));
-        }
-
-        if (data) {
-            Object.keys(data).forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    if (el.type === 'checkbox') {
-                        el.checked = data[id];
-                    } else {
-                        el.value = data[id];
-                    }
+        // Merge strategy: Use local if unsynced, otherwise server
+        const finalData = (needsSync && localData) ? JSON.parse(localData) : serverData;
+        
+        Object.keys(finalData).forEach(key => {
+            const input = document.getElementById(key);
+            if (input) {
+                if (input.type === 'checkbox') input.checked = finalData[key];
+                else input.value = finalData[key];
+            }
+        });
+        
+        if (needsSync && navigator.onLine) syncToCloud(finalData);
+        
+    } catch (e) {
+        console.warn('Load failed, using local reserve', e);
+        if (localData) {
+            const parsed = JSON.parse(localData);
+            Object.keys(parsed).forEach(key => {
+                const input = document.getElementById(key);
+                if (input) {
+                    if (input.type === 'checkbox') input.checked = parsed[key];
+                    else input.value = parsed[key];
                 }
             });
         }
-    } catch (e) {
-        console.error('Failed to load from server:', e);
-    } finally {
-        setTimeout(() => { isUpdatingFromLoad = false; }, 500);
     }
+    setTimeout(() => { isUpdatingFromLoad = false; }, 500);
 }
 
 // Login logic
