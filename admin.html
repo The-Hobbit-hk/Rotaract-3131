@@ -253,17 +253,32 @@
             
             // Show last seen time in modal
             const lastSeenDate = new Date(user.last_seen).toLocaleString();
+            
+            // Registry Fallback in Modal
+            const regName = user.reg_name || 'Unregistered';
+            const regClub = user.reg_club || 'Unknown Club';
+
             grid.innerHTML = `
                 <div class="data-item" style="grid-column: span 2; background: #e3f2fd; border-left-color: #2196f3;">
                     <div class="data-label">Last Activity Detected</div>
                     <div class="data-value" style="font-weight:bold;">${lastSeenDate}</div>
                 </div>
+                <div class="data-item">
+                    <div class="data-label">Delegate Name (Registry)</div>
+                    <div class="data-value">${regName}</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label">Club Name (Registry)</div>
+                    <div class="data-value">${regClub}</div>
+                </div>
             `;
 
             const skipKeys = ['userId'];
+            let hasExtraData = false;
             
             Object.keys(user.data).forEach(key => {
                 if (skipKeys.includes(key)) return;
+                hasExtraData = true;
                 
                 let val = user.data[key];
                 if (val === '') val = '<span style="color:#aaa;">Empty</span>';
@@ -278,6 +293,15 @@
                     </div>
                 `;
             });
+
+            if (!hasExtraData) {
+                grid.innerHTML += `
+                    <div class="data-item" style="grid-column: span 2; text-align: center; background: #fff3e0; border-left-color: #ff9800;">
+                        <div class="data-label">Status</div>
+                        <div class="data-value">Member has logged in but has not yet entered any data into their workbook.</div>
+                    </div>
+                `;
+            }
 
             document.getElementById('user-modal').style.display = 'block';
         }
