@@ -6,26 +6,11 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static(__dirname));
-
-// Global Error Handler for detailed diagnostics
-app.use((err, req, res, next) => {
-    console.error('GLOBAL ERROR:', err);
-    if (res.headersSent) return next(err);
-    res.status(500).json({ 
-        error: 'Internal Server Error', 
-        message: err.message,
-        stack: isVercel ? 'Hidden' : err.stack 
-    });
-});
-
 // Database Configuration
 const isPostgres = !!(process.env.DATABASE_URL || process.env.POSTGRES_URL);
 const isVercel = !!process.env.VERCEL;
-let db; // For SQLite
-let pool; // For PostgreSQL
+let db; 
+let pool; 
 
 if (isPostgres) {
     console.log('Using PostgreSQL Database (Cloud)');
@@ -33,7 +18,14 @@ if (isPostgres) {
         connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
         ssl: { rejectUnauthorized: false }
     });
-} else if (!isVercel) {
+}
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static(__dirname));
+
+// Global Error Handler for detailed diagnostics
+app.use((err, req, res, next) => { else if (!isVercel) {
     try {
         const sqlite3 = require('sqlite3');
         console.log('Using SQLite Database (Local)');
