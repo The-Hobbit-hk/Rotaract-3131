@@ -10,6 +10,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// Global Error Handler for detailed diagnostics
+app.use((err, req, res, next) => {
+    console.error('GLOBAL ERROR:', err);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ 
+        error: 'Internal Server Error', 
+        message: err.message,
+        stack: isVercel ? 'Hidden' : err.stack 
+    });
+});
+
 // Database Configuration
 const isPostgres = !!(process.env.DATABASE_URL || process.env.POSTGRES_URL);
 const isVercel = !!process.env.VERCEL;
@@ -38,35 +49,40 @@ if (isPostgres) {
     }
 }
 
-let isInitialized = false;
 async function ensureDbReady() {
     if (isInitialized) return;
     if (!isPostgres) {
-        if (isVercel) throw new Error("Database not configured. Please set POSTGRES_URL in Vercel settings.");
+        if (isVercel) throw new Error("POSTGRES_URL is missing in Vercel settings.");
         isInitialized = true;
         return;
     }
 
-    let client;
     try {
-        client = await pool.connect();
-        await client.query(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, data TEXT, last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
-        await client.query(`CREATE TABLE IF NOT EXISTS registry (rotary_id TEXT PRIMARY KEY, name TEXT, club TEXT)`);
-        
-        const check = await client.query('SELECT COUNT(*) FROM registry');
-        if (parseInt(check.rows[0].count) < 30) {
-            console.log('Seeding cloud registry...');
-            await seedRegistry();
+        const client = await pool.connect();
+        try {
+            await client.query(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, data TEXT, last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+            await client.query(`CREATE TABLE IF NOT EXISTS registry (rotary_id TEXT PRIMARY KEY, name TEXT, club TEXT)`);
+            const check = await client.query('SELECT COUNT(*) FROM registry');
+            if (parseInt(check.rows[0].count) < 30) {
+                await seedRegistry();
+            }
+            isInitialized = true;
+        } finally {
+            client.release();
         }
-        isInitialized = true;
-        console.log('Database initialized.');
     } catch (err) {
-        console.error('Database connection failed:', err.message);
-        throw err;
-    } finally {
-        if (client) client.release();
+        throw new Error(`Database connection failed. Verify your POSTGRES_URL. Error: ${err.message}`);
     }
 }
+
+app.get('/api/test-db', async (req, res) => {
+    try {
+        await ensureDbReady();
+        res.json({ status: 'Connected', isPostgres, env: !!(process.env.DATABASE_URL || process.env.POSTGRES_URL) });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 async function seedRegistry() {
     const members = [
