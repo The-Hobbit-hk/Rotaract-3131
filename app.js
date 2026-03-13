@@ -109,7 +109,7 @@ async function loadData() {
     if (!currentUser) return;
 
     try {
-        const response = await fetch(`http://${window.location.hostname}:3000/api/load/${currentUser}`);
+        const response = await fetch(`/api/load/${currentUser}`);
         const result = await response.json();
         
         let data = result.data;
@@ -218,7 +218,7 @@ function hideSwipeHint() {
 setInterval(async () => {
     if (currentUser) {
         try {
-            await fetch(`http://${window.location.hostname}:3000/api/heartbeat`, {
+            await fetch(`/api/heartbeat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: currentUser })
