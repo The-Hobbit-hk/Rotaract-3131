@@ -163,6 +163,7 @@ function performLogin() {
         // Removed saveData() here because it overwrites pre-fill with empty data.
         // /api/load already tracks activity on the server.
         checkLogin();
+        updateActivityStatus('active');
     }
 }
 
@@ -223,9 +224,43 @@ function hideSwipeHint() {
     if (hint) hint.style.opacity = '0';
 }
 
+// Status synchronization with server
+async function updateActivityStatus(status) {
+    if (!currentUser) return;
+    
+    const payload = JSON.stringify({ userId: currentUser, status });
+    
+    // Use sendBeacon for more reliable delivery during exit
+    if (status === 'inactive' && navigator.sendBeacon) {
+        navigator.sendBeacon('/api/activity/force', new Blob([payload], {type: 'application/json'}));
+    } else {
+        try {
+            await fetch('/api/activity/force', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload
+            });
+        } catch (e) {
+            console.warn("Status update failed", e);
+        }
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        updateActivityStatus('inactive');
+    } else {
+        updateActivityStatus('active');
+    }
+});
+
+window.addEventListener('beforeunload', () => {
+    updateActivityStatus('inactive');
+});
+
 // Heartbeat system for real-time activity monitoring
 setInterval(async () => {
-    if (currentUser) {
+    if (currentUser && document.visibilityState === 'visible') {
         try {
             await fetch(`/api/heartbeat`, {
                 method: 'POST',
@@ -241,6 +276,7 @@ setInterval(async () => {
 window.onload = () => {
     initPages();
     checkLogin();
+    if (currentUser) updateActivityStatus('active');
     updateBookPosition();
     
     // Show swipe hint briefly on mobile
@@ -248,7 +284,7 @@ window.onload = () => {
         const hint = document.getElementById('swipe-hint');
         if (hint) {
             hint.style.display = 'flex';
-            setTimeout(() => { hint.style.opacity = '0'; }, 4000);
+            setTimeout(() => { if(hint) hint.style.opacity = '0'; }, 4000);
         }
     }
 };

@@ -242,6 +242,23 @@ app.post('/api/heartbeat', async (req, res, next) => {
     } catch (e) { next(e); }
 });
 
+app.post('/api/activity/force', async (req, res, next) => {
+    try {
+        await ensureDbReady();
+        const { userId, status } = req.body;
+        const timestamp = (status === 'active') ? 'CURRENT_TIMESTAMP' : "'2000-01-01 00:00:00'";
+        
+        if (isPostgres) {
+            await pool.query(`INSERT INTO users (id, last_seen) VALUES ($1, ${timestamp}) ON CONFLICT(id) DO UPDATE SET last_seen = ${timestamp}`, [userId]);
+        } else {
+            await new Promise((resolve, reject) => {
+                db.run(`INSERT INTO users (id, last_seen) VALUES (?, ${timestamp}) ON CONFLICT(id) DO UPDATE SET last_seen = ${timestamp}`, [userId], (err) => err ? reject(err) : resolve());
+            });
+        }
+        res.json({ ok: true, status });
+    } catch (e) { next(e); }
+});
+
 // Final Error Handler
 app.use((err, req, res, next) => {
     console.error('SERVER ERROR:', err);
