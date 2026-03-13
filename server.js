@@ -189,13 +189,30 @@ app.get('/api/load/:userId', async (req, res) => {
         else await dbRun('INSERT INTO users (id, last_seen) VALUES (?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET last_seen = excluded.last_seen', [userId]);
 
         const user = await dbQuery('SELECT data FROM users WHERE id = ?', [userId]);
-        if (user.row && user.row.data) return res.json({ data: JSON.parse(user.row.data) });
+        
+        // If data exists, check if it's actually meaningful (not just an empty object)
+        if (user.row && user.row.data) {
+            const parsedData = JSON.parse(user.row.data);
+            if (Object.keys(parsedData).length > 2) { // Prof Name and Club are 2, if there's more, it's a real save
+                return res.json({ data: parsedData });
+            }
+        }
 
+        // Fallback to registry if no real data found
         const reg = await dbQuery('SELECT name, club FROM registry WHERE rotary_id = ?', [userId]);
-        if (reg.row) return res.json({ data: { prof_name: reg.row.name, prof_club: reg.row.club }, prefilled: true });
+        if (reg.row) {
+            console.log(`Pre-filling for ${userId}: ${reg.row.name}`);
+            return res.json({ 
+                data: { prof_name: reg.row.name, prof_club: reg.row.club }, 
+                prefilled: true 
+            });
+        }
         
         res.json({ data: {} });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) { 
+        console.error('API Load Error:', err.message);
+        res.status(500).json({ error: err.message }); 
+    }
 });
 
 // API: Admin Get All Data
