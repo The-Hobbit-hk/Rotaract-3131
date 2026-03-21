@@ -95,59 +95,59 @@ async function ensureDbReady() {
 
 async function seedRegistry() {
     const members = [
-        ["Rtr Prajwal Rajendra Bande", "11093273", "District Officer Interact Rotaract Relations"],
-        ["Shreeraj Nilkanth", "12000502", "District team - Public relation"],
-        ["Sarthak Manish Ambhore", "12186196", "District Officer No portfolio"],
-        ["Rtr.Jayesh Chavan", "12224980", "District Club Service Director"],
-        ["Aruna Suresh", "12170441", "Sergeant-at-Arms"],
-        ["prem Bansode", "10767145", "DZR"],
-        ["Rtr. Shrushti Shirore", "12223932", "Assistant Zonal Representative"],
-        ["Pranav Gandhi", "12224094", "Co-DISD"],
-        ["Rtr. Rajas", "11303190", "DZR"],
-        ["Chinmayee Anant Bartakke", "12170444", "Diversity Equity Inclusion Representative"],
-        ["Ashi Agarwal", "11763775", "District Coordinator Events"],
-        ["PHF. Rtr. Aslam Dhanani", "12135651", "District Community Service Director"],
-        ["Omkar P", "11891333", "Membership Director"],
-        ["Rtr. Pratham Pokharkar", "11815224", "District Zonal Representative"],
-        ["Rtr. Pranav Pisal", "12159320", "Ryla Chairperson"],
-        ["Prerna Bhilare", "12022291", "AZR - Assistant Zonal Representative"],
-        ["Vageesh Baheti", "11835327", "AZR"],
-        ["Vaishnavi Kedari", "12384797", "Co Community Service Director"],
-        ["Vedant Chirmade", "12159318", "DZR"],
-        ["Rtr. Vedant Chaudhari", "12159316", "District Zonal Representative"],
-        ["Rtr. Salvin padvi", "12069414", "District Public Relationship officer"],
-        ["Shreyas Pathak", "11007467", "District Sergeant-at-Arms"],
-        ["Shrawani Shendkar", "12178897", "District Public Image Director"],
-        ["Rohit Kumbhar", "10964797", "AZR"],
-        ["Abhishek Sachchidanand Dixit", "12401193", "District Editor"],
-        ["Rtr. Hamid Abdul Shaikh", "10549416", "Event Secretary"],
-        ["Sanjana Pawar", "11641713", "World Rotaract Week Chairperson"],
-        ["Rtr Digvijay Lad", "11751959", "Trek Convenor"],
-        ["Rtr. Aniket Atul Sardar", "12349119", "Zonal Representative- Zone 1"],
-        ["Rtr.Aditya Verma", "11595227", "AZR"],
-        ["PHF RTR ADV SATTYAJEET KARALE PATIL", "10286501", "District Legal Advisor"],
-        ["PHF. Rtr. Dr. Karishma Awari", "9843452", "DRRE"],
-        ["Rtr. Atharvh Devdhar", "11421551", "District Club Advisor"],
-        ["Rtr. Dr. Aishwarya Patil", "11492286", "District Secretary- Reporting"],
-        ["PHF Rtr Harshvardhan Kale", "10843281", "District General Secretary Elect"],
-        ["Rtr. Suraj Surkutla", "10786128", "District Secretary - Administration"],
-        ["Rtr.Samrudhi Khade", "11598405", "District Professionnel director"],
-        ["Rtr.Janhavi Yeole", "11889397", "DPRO"],
-        ["Rtr. Rohan Puri", "11254610", "Zonal Advisor - Zone 1"],
-        ["Disha Daga", "11170853", "District Secretary - Protocols"],
-        ["Rtr. Harshal Nikam", "12346183", "District Editor"],
-        ["PHF Rtr. Sharvindu Jogdand", "11207152", "District Treasurer"],
-        ["PHF Rtr. Bhushan Parkhi", "11990300", "District Zonal Representative"],
-        ["Rtr. Talha Shaikh", "11221346", "Co-PAO"],
-        ["Sumedh Gite", "10856109", "Azr"],
-        ["Rtr. Dr. Ashlesha Deshpande", "11004224", "District Club Advisor"],
-        ["Devsharan singh", "11982352", "District Website Admin Coordinator"],
-        ["Rtr. Ishan Malawade", "11310222", "District Director - International Service"],
-        ["Adhishree Thakar", "1075076075", "District RRRO"],
-        ["Vedant Prashant Buge", "12344119", "District Director - Without Portfolio"],
-        ["Rtr. Faizan Tamboli", "9732322", "District Director - Communications"],
-        ["Gaurav Manish Golecha", "11965097", "District Officer – Professional Assistance"],
-        ["Drishti Singh", "10288754", "District Learning Facilitator"]
+        ["Rtr Prajwal Rajendra Bande", "11093273", "Rotaract Club of Daund College", "District Officer Interact Rotaract Relations"],
+        ["Shreeraj Nilkanth", "12000502", "Rotaract Club of Panvel Industrial Town", "District team - Public relation"],
+        ["Sarthak Manish Ambhore", "12186196", "Rotaract Club of DY Patil College of Engineering", "District Officer No portfolio"],
+        ["Rtr.Jayesh Chavan", "12224980", "Rotaract Club of Pune City Fortune", "District Club Service Director"],
+        ["Aruna Suresh", "12170441", "Rotaract Club of Viman Nagar", "Sergeant-at-Arms"],
+        ["prem Bansode", "10767145", "Rotaract Club of Daund College", "DZR"],
+        ["Rtr. Shrushti Shirore", "12223932", "Rotaract Club of Pune Sinhagad Road", "Assistant Zonal Representative"],
+        ["Pranav Gandhi", "12224094", "Rotaract Club of Bibwewadi Pune", "Co-DISD"],
+        ["Rtr. Rajas", "11303190", "Rotaract Club of Pune City Fortune", "DZR"],
+        ["Chinmayee Anant Bartakke", "12170444", "Rotaract Club of Viman Nagar", "Diversity Equity Inclusion Representative"],
+        ["Ashi Agarwal", "11763775", "Rotaract Club of ROAR NIBM", "District Coordinator Events"],
+        ["PHF. Rtr. Aslam Dhanani", "12135651", "Rotaract Club of Aundh", "District Community Service Director"],
+        ["Omkar P", "11891333", "Rotaract Club of Pune City Fortune", "Membership Director"],
+        ["Rtr. Pratham Pokharkar", "11815224", "Rotaract Club of Pune Aurora", "District Zonal Representative"],
+        ["Rtr. Pranav Pisal", "12159320", "Rotaract Club of Genba Sopanrao Moze College of Engineering", "Ryla Chairperson"],
+        ["Prerna Bhilare", "12022291", "Rotaract Club of Sinhgad College of Pharmacy", "AZR - Assistant Zonal Representative"],
+        ["Vageesh Baheti", "11835327", "Rotaract Club of Pune Mideast", "AZR"],
+        ["Vaishnavi Kedari", "12384797", "Rotaract Club of Symbiosis Skills and Professional University", "Co Community Service Director"],
+        ["Vedant Chirmade", "12159318", "Rotaract Club of Genba Sopanrao Moze College of Engineering", "DZR"],
+        ["Rtr. Vedant Chaudhari", "12159316", "Rotaract Club of Genba Sopanrao Moze College of Engineering", "District Zonal Representative"],
+        ["Rtr. Salvin padvi", "12069414", "Rotaract Club of Rajarshi Shahu College of Engineering- Tathawade", "District Public Relationship officer"],
+        ["Shreyas Pathak", "11007467", "Rotaract Club of Pune Mideast", "District Sergeant-at-Arms"],
+        ["Shrawani Shendkar", "12178897", "Rotaract Club of Genba Sopanrao Moze College of Engineering", "District Public Image Director"],
+        ["Rohit Kumbhar", "10964797", "Rotaract Club of Bavdhan Pioneers", "AZR"],
+        ["Abhishek Sachchidanand Dixit", "12401193", "Rotaract Club of Vibrants", "District Editor"],
+        ["Rtr. Hamid Abdul Shaikh", "10549416", "Rotaract Club of Aundh Smartcity", "Event Secretary"],
+        ["Sanjana Pawar", "11641713", "Rotaract Club of Vibrants", "World Rotaract Week Chairperson"],
+        ["Rtr Digvijay Lad", "11751959", "Rotaract Club of Pune City Fortune", "Trek Convenor"],
+        ["Rtr. Aniket Atul Sardar", "12349119", "Rotaract Club of Khopoli", "Zonal Representative- Zone 1"],
+        ["Rtr.Aditya Verma", "11595227", "Rotaract Club of Symbiosis Skills and Professional University", "AZR"],
+        ["PHF RTR ADV SATTYAJEET KARALE PATIL", "10286501", "Rotaract Club of Pune Samrajya", "District Legal Advisor"],
+        ["PHF. Rtr. Dr. Karishma Awari", "9843452", "Rotaract Club of Pune Shaniwarwada", "DRRE"],
+        ["Rtr. Atharvh Devdhar", "11421551", "Rotaract Club of Pune Shaniwarwada", "District Club Advisor"],
+        ["Rtr. Dr. Aishwarya Patil", "11492286", "Rotaract Club of Pune Shaniwarwada", "District Secretary- Reporting"],
+        ["PHF Rtr Harshvardhan Kale", "10843281", "Rotaract Club of Bavdhan Pioneers", "District General Secretary Elect"],
+        ["Rtr. Suraj Surkutla", "10786128", "Rotaract Club of Pune Vishwam", "District Secretary - Administration"],
+        ["Rtr.Samrudhi Khade", "11598405", "Rotaract Club of Pune Zenith", "District Professionnel director"],
+        ["Rtr.Janhavi Yeole", "11889397", "Rotaract Club of Pune Zenith", "DPRO"],
+        ["Rtr. Rohan Puri", "11254610", "Rotaract Club of Khopoli", "Zonal Advisor - Zone 1"],
+        ["Disha Daga", "11170853", "Rotaract Club of Bibwewadi Pune", "District Secretary - Protocols"],
+        ["Rtr. Harshal Nikam", "12346183", "", "District Editor"],
+        ["PHF Rtr. Sharvindu Jogdand", "11207152", "", "District Treasurer"],
+        ["PHF Rtr. Bhushan Parkhi", "11990300", "", "District Zonal Representative"],
+        ["Rtr. Talha Shaikh", "11221346", "", "Co-PAO"],
+        ["Sumedh Gite", "10856109", "", "Azr"],
+        ["Rtr. Dr. Ashlesha Deshpande", "11004224", "", "District Club Advisor"],
+        ["Devsharan singh", "11982352", "", "District Website Admin Coordinator"],
+        ["Rtr. Ishan Malawade", "11310222", "", "District Director - International Service"],
+        ["Adhishree Thakar", "1075076075", "", "District RRRO"],
+        ["Vedant Prashant Buge", "12344119", "", "District Director - Without Portfolio"],
+        ["Rtr. Faizan Tamboli", "9732322", "", "District Director - Communications"],
+        ["Gaurav Manish Golecha", "11965097", "", "District Officer – Professional Assistance"],
+        ["Drishti Singh", "10288754", "", "District Learning Facilitator"]
     ];
 
     if (isPostgres) {
@@ -155,13 +155,13 @@ async function seedRegistry() {
         const placeholders = [];
         members.forEach((m, i) => {
             values.push(...m);
-            placeholders.push(`($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`);
+            placeholders.push(`($${i * 4 + 1}, $${i * 4 + 2}, $${i * 4 + 3}, $${i * 4 + 4})`);
         });
-        const sql = `INSERT INTO registry (name, rotary_id, position) VALUES ${placeholders.join(',')} ON CONFLICT (rotary_id) DO UPDATE SET name = EXCLUDED.name, position = EXCLUDED.position`;
+        const sql = `INSERT INTO registry (name, rotary_id, club, position) VALUES ${placeholders.join(',')} ON CONFLICT (rotary_id) DO UPDATE SET name = EXCLUDED.name, club = EXCLUDED.club, position = EXCLUDED.position`;
         await pool.query(sql, values);
     } else {
         return new Promise((resolve) => {
-            const stmt = db.prepare(`INSERT INTO registry (name, rotary_id, position) VALUES (?, ?, ?) ON CONFLICT(rotary_id) DO UPDATE SET name = excluded.name, position = excluded.position`);
+            const stmt = db.prepare(`INSERT INTO registry (name, rotary_id, club, position) VALUES (?, ?, ?, ?) ON CONFLICT(rotary_id) DO UPDATE SET name = excluded.name, club = excluded.club, position = excluded.position`);
             members.forEach(m => stmt.run(m));
             stmt.finalize(() => resolve());
         });
@@ -219,12 +219,7 @@ app.get('/api/load/:userId', async (req, res, next) => {
             });
         }
 
-        if (userData && userData.data) {
-            const parsed = JSON.parse(userData.data);
-            if (Object.keys(parsed).length > 2) return res.json({ data: parsed });
-        }
-
-        // Registry fallback
+        // Registry lookup for merging
         let regData;
         if (isPostgres) {
             const resReg = await pool.query('SELECT name, club, position FROM registry WHERE rotary_id = $1', [userId]);
@@ -233,6 +228,22 @@ app.get('/api/load/:userId', async (req, res, next) => {
             regData = await new Promise((resolve, reject) => {
                 db.get('SELECT name, club, position FROM registry WHERE rotary_id = ?', [userId], (err, row) => err ? reject(err) : resolve(row));
             });
+        }
+
+        if (userData && userData.data) {
+            const parsed = JSON.parse(userData.data);
+            
+            // Merge registry defaults if missing in saved data
+            if (regData) {
+                if (!parsed.prof_name || parsed.prof_name.trim() === "") parsed.prof_name = regData.name;
+                if (!parsed.prof_club || parsed.prof_club.trim() === "") parsed.prof_club = regData.club;
+                if (!parsed.prof_pos || parsed.prof_pos.trim() === "") parsed.prof_pos = regData.position;
+            }
+
+            // Detect substantial work (more than just profile fields)
+            const hasActualWork = Object.keys(parsed).some(k => !['prof_name', 'prof_club', 'prof_pos', 'prof_blood', 'prof_dob'].includes(k) && parsed[k] && parsed[k].toString().trim().length > 0);
+            
+            return res.json({ data: parsed, mergedWithRegistry: !!regData, hasWork: hasActualWork });
         }
 
         if (regData) {

@@ -197,7 +197,7 @@ async function loadData() {
     isUpdatingFromLoad = true;
     
     // Prioritize local unsynced data
-    const localData = localStorage.getItem(`workbook_local_${currentUser}`);
+    const localDataRaw = localStorage.getItem(`workbook_local_${currentUser}`);
     const needsSync = localStorage.getItem(`workbook_needs_sync_${currentUser}`);
     
     try {
@@ -205,8 +205,22 @@ async function loadData() {
         const result = await response.json();
         const serverData = result.data || {};
         
+        let localData = null;
+        if (needsSync && localDataRaw) {
+            try { localData = JSON.parse(localDataRaw); } catch(e) {}
+        }
+
         // Merge strategy: Use local if unsynced, otherwise server
-        const finalData = (needsSync && localData) ? JSON.parse(localData) : serverData;
+        let finalData = localData || serverData;
+
+        // CRITICAL FIX: If local has empty profile fields, fill them from server pre-fill
+        if (localData && serverData) {
+            ['prof_name', 'prof_club', 'prof_pos'].forEach(key => {
+                if ((!finalData[key] || finalData[key].trim() === "") && serverData[key]) {
+                    finalData[key] = serverData[key];
+                }
+            });
+        }
         
         Object.keys(finalData).forEach(key => {
             const input = document.getElementById(key);
