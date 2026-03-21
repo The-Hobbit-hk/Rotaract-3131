@@ -79,11 +79,9 @@ async function ensureDbReady() {
             await client.query("ALTER TABLE registry ADD COLUMN position TEXT");
         }
         
-        const countRes = await client.query('SELECT COUNT(*) FROM registry');
-        if (parseInt(countRes.rows[0].count) < 30) {
-            console.log('Cloud seeding required...');
-            await seedRegistry();
-        }
+        console.log('Syncing registry to Cloud DB...');
+        await seedRegistry();
+        
         isInitialized = true;
         console.log('Postgres ready.');
     } catch (err) {
